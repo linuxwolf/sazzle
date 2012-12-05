@@ -22,6 +22,7 @@ var _promisedValue = function(config, prop, username) {
  */
 
 exports.client = {
+    name: "PLAIN",
     start: function(config) {
         var deferred = new promised_io.Deferred();
 
@@ -29,12 +30,14 @@ exports.client = {
             var pwd = _promisedValue(config, "password", usr);
             var authz = _promisedValue(config, "authzid", usr);
 
-            return promised_io.all(promised_io.whenPromise(usr),
-                                   pwd,
-                                   authz);
+            return promised_io.all(authz,
+                                   promised_io.whenPromise(usr),
+                                   pwd);
         }).then(function(factors) {
                     config.state = "complete";
-                    deferred.resolve(factors.join("\u0000"));
+                    var output = factors.join("\u0000");
+                    output = new Buffer(output, "binary");
+                    deferred.resolve(output);
                 },
                 function(err) {
                     deferred.reject(err);
@@ -59,6 +62,7 @@ exports.client = {
  */
 
 exports.server = {
+    name: "PLAIN",
     start: function(config, input) {
         if (!input) {
             return promised_io.when(null);
@@ -85,7 +89,7 @@ exports.server = {
             config.authcid = usr;
             config.authzid = authz || usr;
             config.state = "complete";
-            deferred.resolve();
+            deferred.resolve(null);
         });
 
         return deferred.promise;
