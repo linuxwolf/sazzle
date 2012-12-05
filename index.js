@@ -21,6 +21,6 @@ var mechs = [
 ];
 
 mechs.forEach(function(m) {
-    exports.client.register(m.client);
-    exports.server.register(m.server);
+    exports.client.register(m.client, true);
+    exports.server.register(m.server, true);
 });
