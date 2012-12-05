@@ -3,5 +3,6 @@
  */
 
 module.exports = {
-    "session" : require("./test-session.js")
+    "session" : require("./test-session.js"),
+    "PLAIN mechanism" : require("./test-PLAIN.js")
 }
