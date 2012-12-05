@@ -8,7 +8,7 @@ var _promisedValue = function(config, prop, username) {
     if (typeof(val) === "function") {
         val = val(config, username);
     }
-    return promised_io.whenPromise(val);
+    return promised_io.whenPromise(val || "");
 }
 
 /**
@@ -23,7 +23,7 @@ var _promisedValue = function(config, prop, username) {
 
 exports.client = {
     name: "PLAIN",
-    start: function(config) {
+    stepStart: function(config) {
         var deferred = new promised_io.Deferred();
 
         _promisedValue(config, "username").then(function(usr) {
@@ -63,7 +63,7 @@ exports.client = {
 
 exports.server = {
     name: "PLAIN",
-    start: function(config, input) {
+    stepStart: function(config, input) {
         if (!input) {
             return promised_io.when(null);
         }
