@@ -3,8 +3,7 @@
     "version" : "0.0.0",
     "main" : "./index.js",
     "dependencies" : {
-        "cloneextend" : "~0.0.3",
-        "promised-io" : "*"
+        "promised-io" : "~0.3"
     },
     "devDependencies" : {
         "nodeunit" : "*"
