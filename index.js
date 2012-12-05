@@ -8,7 +8,8 @@ var $ = require("cloneextend"),
     util = require("util"),
     promised_io = require("promised-io");
 
-function MakeArray(candidate) {
+// helper functions
+function __makeArray(candidate) {
     var output;
 
     if (!candidate) {
@@ -21,10 +22,17 @@ function MakeArray(candidate) {
         output = [candidate];
     }
 }
-function isBuffer(data) {
+function __isBuffer(data) {
     return (data instanceof Buffer);
 }
+function __rejectPromise(ex) {
+    var deferred = new promised_io.Deferred();
+    deferred.reject(ex);
+    return deferred.promise;
+}
 
+
+// Client-side implementation
 function SASLClient(mech, config) {
     this._mech = mech;
 
@@ -44,10 +52,11 @@ function SASLClient(mech, config) {
     });
 
     Object.defineProperty(this, "completed", {
-        get: function() { return !!config.completed; },
+        get: function() { return (config.state === "complete"); },
         set: function(val) { completed = !!val; }
     });
 
+    // first state is 'start'
     config.state = "start";
 }
 SASLClient.prototype.step = function(input, encoding) {
@@ -70,12 +79,12 @@ SASLClient.prototype.step = function(input, encoding) {
             output = this._mech[state](this.config, input);
             promise = promised_io.whenPromise(output);
         } catch (ex) {
-            config.completed = true;
-            // TODO: rejected Promise (ex)
+            config.state = "complete";
+            promise = __rejectPromise(ex);
         }
     } else {
-        // TODO: rejected Promise (invalid state)
-        config.completed = true;
+        config.state = "complete";
+        promise = __rejectPromise(new Error("invalid state"));
     }
 
     return promise;
@@ -135,7 +144,7 @@ SASLClientFactory.prototype.register = function(mech) {
     this.available[mech.name] = mech;
 };
 SASLClientFactory.prototype.create = function(avail, config) {
-    avail = MakeArray(avail);
+    avail = __makeArray(avail);
     config = $.clone(config || {});
 
     var client = null,
@@ -151,5 +160,7 @@ SASLClientFactory.prototype.create = function(avail, config) {
 
     return client;
 };
+
+// setup "globals"
 exports.SASLClientFactory = SASLClientFactory;
 exports.client = new SASLClientFactory();

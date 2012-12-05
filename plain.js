@@ -33,6 +33,7 @@ exports.client = {
                                    pwd,
                                    authz);
         }).then(function(factors) {
+                    config.state = "complete";
                     deferred.resolve(factors.join("\u0000"));
                 },
                 function(err) {
@@ -63,9 +64,30 @@ exports.server = {
             return promised_io.when(null);
         }
 
+        var deferred = new promised_io.Deferred();
         input = input.toString("binary").split("\u0000");
         var authz = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
+        _promisedValue(config, "username").then(function(cfgUser) {
+            cfgUser = cfgUser || usr;
+            return promised_io.all(promised_io.promiseWhen(cfgUser),
+                                   _promisedValue(config, "password", cfgUser),
+                                   _promisedValue(config, "authzid", cfgUser));
+        }).then(function(factors) {
+            if (    (factors[0] !== usr) ||
+                    (factors[1] !== pwd) ||
+                    (authz && factors[2] !== authz)) {
+                deferred.reject(new Error("not authorized"));
+                return;
+            }
+
+            config.authcid = usr;
+            config.authzid = authz || usr;
+            config.state = "complete";
+            deferred.resolve();
+        });
+
+        return deferred.promise;
     }
 }
