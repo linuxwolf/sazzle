@@ -21,33 +21,36 @@ module.exports = {
         config = {};
         session = new SASLSession(mech, config);
         test.equal(session.mechanism, mech.name);
-        test.notStrictEqual(session.config, config);
+        test.deepEqual(session.properties, {
+            state:"start"
+        })
         test.ok(!session.completed);
-        test.equal(session.config.state, "start");
 
         config = { state:"complete" };
         session = new SASLSession(mech, config);
         test.equal(session.mechanism, mech.name);
-        test.notStrictEqual(session.config, config);
+        test.deepEqual(session.properties, {
+            state:"start"
+        })
         test.ok(!session.completed);
-        test.equal(session.config.state, "start");
 
         config = {
             username:"bilbo.baggins",
             password:"! 84G3nd"
         };
         session = new SASLSession(mech, config);
-        config.state = "start";
         test.equal(session.mechanism, mech.name);
-        test.notStrictEqual(session.config, config);
+        test.deepEqual(session.properties, {
+            state:"start"
+        })
         test.ok(!session.completed);
-        test.deepEqual(session.config, config);
 
         session = new SASLSession(mech);
         test.equal(session.mechanism, mech.name);
-        test.ok(session.config);
+        test.deepEqual(session.properties, {
+            state:"start"
+        })
         test.ok(!session.completed);
-        test.equal(session.config.state, "start");
 
         test.done();
     },
@@ -57,9 +60,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "complete";
                 var deferred = new promised_io.Deferred();
@@ -88,9 +91,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "complete";
                 var deferred = new promised_io.Deferred();
@@ -121,9 +124,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 var deferred = new promised_io.Deferred();
                 deferred.reject(new Error("mechanism failure"));
@@ -151,9 +154,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "complete";
                 var deferred = new promised_io.Deferred();
@@ -194,9 +197,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "next";
                 var deferred = new promised_io.Deferred();
@@ -204,7 +207,8 @@ module.exports = {
                 return deferred.promise;
             },
             stepNext: function(config, input) {
-                test.strictEqual(config, session.config);
+                test.ok(config);
+                test.equal(config.state, "next");
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
@@ -247,9 +251,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "next";
                 var deferred = new promised_io.Deferred();
@@ -257,7 +261,8 @@ module.exports = {
                 return deferred.promise;
             },
             stepNext: function(config, input) {
-                test.strictEqual(config, session.config);
+                test.ok(config);
+                test.equal(config.state, "next");
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
@@ -300,9 +305,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "next";
                 var deferred = new promised_io.Deferred();
@@ -310,7 +315,8 @@ module.exports = {
                 return deferred.promise;
             },
             stepNext: function(config, input) {
-                test.strictEqual(config, session.config);
+                test.ok(config);
+                test.equal(config.state, "next");
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
@@ -353,9 +359,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "next";
                 var deferred = new promised_io.Deferred();
@@ -363,7 +369,8 @@ module.exports = {
                 return deferred.promise;
             },
             stepNext: function(config, input) {
-                test.strictEqual(config, session.config);
+                test.ok(config);
+                test.equal(config.state, "next");
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
@@ -406,9 +413,9 @@ module.exports = {
         var mech = {
             name : "MOCK-MECH",
             stepStart: function(config, input) {
-                test.strictEqual(config, session.config);
-                test.ok(!input);
+                test.ok(config);
                 test.equal(config.state, "start");
+                test.ok(!input);
 
                 config.state = "next";
                 var deferred = new promised_io.Deferred();
@@ -416,7 +423,8 @@ module.exports = {
                 return deferred.promise;
             },
             stepNext: function(config, input) {
-                test.strictEqual(config, session.config);
+                test.ok(config);
+                test.equal(config.state, "next");
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
