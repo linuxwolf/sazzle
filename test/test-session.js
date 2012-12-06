@@ -463,3 +463,6 @@ module.exports = {
         });
     }
 }
+
+// run test directly from node (if main)
+require("./utils.js").run(module);
