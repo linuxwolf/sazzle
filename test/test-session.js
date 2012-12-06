@@ -51,7 +51,7 @@ module.exports = {
 
         test.done();
     },
-    "test step client single-stage success": function(test) {
+    "test step single-stage success": function(test) {
         var config,
             session;
         var mech = {
@@ -82,7 +82,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client single-stage success (config data)": function(test) {
+    "test step single-stage success (config data)": function(test) {
         var config,
             session;
         var mech = {
@@ -115,7 +115,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client single-stage failure (from mech)": function(test) {
+    "test step single-stage failure (from mech)": function(test) {
         var config,
             session;
         var mech = {
@@ -145,7 +145,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client single-stage failure (invalid state)": function(test) {
+    "test step single-stage failure (invalid state)": function(test) {
         var config,
             session;
         var mech = {
@@ -188,7 +188,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client multi-stage success": function(test) {
+    "test step multi-stage success": function(test) {
         var config,
             session;
         var mech = {
@@ -241,7 +241,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client multi-stage success (string input 'binary')": function(test) {
+    "test step multi-stage success (string input 'binary')": function(test) {
         var config,
             session;
         var mech = {
@@ -294,7 +294,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client multi-stage success (string input base64)": function(test) {
+    "test step multi-stage success (string input base64)": function(test) {
         var config,
             session;
         var mech = {
@@ -347,7 +347,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client multi-stage success (string input hex)": function(test) {
+    "test step multi-stage success (string input hex)": function(test) {
         var config,
             session;
         var mech = {
@@ -400,7 +400,7 @@ module.exports = {
             test.done();
         });
     },
-    "test step client multi-stage success (string input implicit)": function(test) {
+    "test step multi-stage success (string input implicit)": function(test) {
         var config,
             session;
         var mech = {
