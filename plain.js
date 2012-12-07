@@ -1,12 +1,17 @@
 /*!
  * plain.js - implementation of PLAIN mechanism
  */
-var promised_io = require("promised-io");
+var promised_io = require("promised-io"),
+    helpers = require("./lib/helpers.js");
 
 var _promisedValue = function(config, prop, username) {
     var val = config[prop];
     if (typeof(val) === "function") {
-        val = val(config, username);
+        try {
+            val = val(config, username);
+        } catch (ex) {
+            return helpers.rejectPromise(ex);
+        }
     }
     return promised_io.whenPromise(val || "");
 }
@@ -26,27 +31,30 @@ exports.client = {
     stepStart: function(config) {
         var deferred = new promised_io.Deferred();
 
-        _promisedValue(config, "username").then(function(usr) {
-            var pwd = _promisedValue(config, "password", usr);
-            var authz = _promisedValue(config, "authzid", usr);
-
-            return promised_io.all(authz,
-                                   promised_io.whenPromise(usr),
-                                   pwd);
-        }).then(function(factors) {
-                    config.authPlain = {
-                        username: factors[1],
-                        authzid:  factors[0] || factors[1]
-                    };
-                    var data = factors.join("\u0000");
-                    deferred.resolve({
-                        state:"verify",
-                        data: new Buffer(data, "binary")
-                    });
-                },
-                function(err) {
-                    deferred.reject(err);
+        promised_io.seq([
+            function() { return _promisedValue(config, "username"); },
+            function(usr) {
+                return promised_io.all(
+                    _promisedValue(config, "authzid", usr),
+                    promised_io.whenPromise(usr),
+                    _promisedValue(config, "password", usr)
+                );
+            }
+        ]).then( function(factors) {
+                config.authPlain = {
+                    username: factors[1],
+                    authzid:  factors[0] || factors[1]
+                };
+                var data = factors.join("\u0000");
+                deferred.resolve({
+                    state:"verify",
+                    data: new Buffer(data, "binary")
                 });
+            },
+            function(err) {
+                deferred.reject(err);
+            }
+        );
         return deferred.promise;
     },
     "stepVerify": function(config, input) {
@@ -89,29 +97,40 @@ exports.server = {
         }
 
         var deferred = new promised_io.Deferred();
+        var handled = false;
+
         input = input.toString("binary").split("\u0000");
         var authz = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
-        _promisedValue(config, "username").then(function(cfgUser) {
-            cfgUser = cfgUser || usr;
-            return promised_io.all(promised_io.promiseWhen(cfgUser),
-                                   _promisedValue(config, "password", cfgUser),
-                                   _promisedValue(config, "authzid", cfgUser));
-        }).then(function(factors) {
-            if (    (factors[0] !== usr) ||
-                    (factors[1] !== pwd) ||
-                    (authz && factors[2] !== authz)) {
-                deferred.reject(new Error("not authorized"));
-                return;
-            }
 
-            deferred.resolve({
-                username: usr,
-                authzid:  authz || usr,
-                state:    "complete"
-            })
-        });
+        promised_io.seq([
+            function() { return _promisedValue(config, "username"); },
+            function(cfgUser) {
+                cfgUser = cfgUser || usr;
+                return promised_io.all(promised_io.whenPromise(cfgUser),
+                                       _promisedValue(config, "password", cfgUser),
+                                       _promisedValue(config, "authzid", cfgUser));
+            }
+        ]).then(function(factors) {
+                if (    (factors[0] !== usr) ||
+                        (factors[1] !== pwd) ||
+                        (authz && factors[2] !== authz)) {
+                    deferred.reject(new Error("not authorized"));
+                    return;
+                }
+
+                authz = factors[2] || authz || usr;
+                deferred.resolve({
+                    username: usr,
+                    authzid:  authz,
+                    state:    "complete"
+                })
+            }, function(err) {
+                !handled && deferred.reject(err);
+                handled = true;
+            }
+        );
 
         return deferred.promise;
     }
