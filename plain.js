@@ -34,14 +34,34 @@ exports.client = {
                                    promised_io.whenPromise(usr),
                                    pwd);
         }).then(function(factors) {
-                    config.state = "complete";
-                    var output = factors.join("\u0000");
-                    output = new Buffer(output, "binary");
-                    deferred.resolve(output);
+                    config.authPlain = {
+                        username: factors[1],
+                        authzid:  factors[0] || factors[1]
+                    };
+                    var data = factors.join("\u0000");
+                    deferred.resolve({
+                        state:"verify",
+                        data: new Buffer(data, "binary")
+                    });
                 },
                 function(err) {
                     deferred.reject(err);
                 });
+        return deferred.promise;
+    },
+    "stepVerify": function(config, input) {
+        var deferred = new promised_io.Deferred();
+
+        if (input) {
+            deferred.reject(new Error("unexpected data"));
+        } else {
+            deferred.resolve({
+                state:"complete",
+                username: config.authPlain.username,
+                authzid:  config.authPlain.authzid
+            });
+        }
+
         return deferred.promise;
     }
 };
@@ -86,10 +106,11 @@ exports.server = {
                 return;
             }
 
-            config.authcid = usr;
-            config.authzid = authz || usr;
-            config.state = "complete";
-            deferred.resolve(null);
+            deferred.resolve({
+                username: usr,
+                authzid:  authz || usr,
+                state:    "complete"
+            })
         });
 
         return deferred.promise;

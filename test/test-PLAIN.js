@@ -17,10 +17,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -41,10 +59,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -67,10 +103,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -88,10 +142,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -113,10 +185,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -140,17 +230,35 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
                 test.done();
             });
         },
-        "test success (password callback promise)" : function(test) {
+        "test success (password promise)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
@@ -161,10 +269,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -183,10 +309,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -209,17 +353,35 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
                 test.done();
             });
         },
-        "test success (authzid callback value)": function(test) {
+        "test success (authzid callback promise)": function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
@@ -237,17 +399,35 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
                 test.done();
             });
         },
-        "test success (authzid callback value)": function(test) {
+        "test success (authzid promise)": function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
@@ -259,10 +439,28 @@ module.exports = {
             var promise = mech.stepStart(config);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
-            test.equal(config.state, "complete");
             promise.then(function(out) {
-                test.ok(out instanceof Buffer);
-                test.equal(out.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
+            }, function(err) {
+                test.fail(err && err.message);
+            });
+
+            promise = mech.stepVerify(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
             }, function(err) {
                 test.fail(err && err.message);
@@ -271,3 +469,5 @@ module.exports = {
         }
     }
 }
+
+require("./utils.js").run(module);

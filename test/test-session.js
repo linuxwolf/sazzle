@@ -10,9 +10,10 @@ module.exports = {
         var mech = {
             "name": "mech",
             "stepStart" : function(config) {
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client initial")
+                });
             }
         };
         var config,
@@ -21,17 +22,15 @@ module.exports = {
         config = {};
         session = new SASLSession(mech, config);
         test.equal(session.mechanism, mech.name);
-        test.deepEqual(session.properties, {
-            state:"start"
-        })
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
         test.ok(!session.completed);
 
         config = { state:"complete" };
         session = new SASLSession(mech, config);
         test.equal(session.mechanism, mech.name);
-        test.deepEqual(session.properties, {
-            state:"start"
-        })
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
         test.ok(!session.completed);
 
         config = {
@@ -40,16 +39,14 @@ module.exports = {
         };
         session = new SASLSession(mech, config);
         test.equal(session.mechanism, mech.name);
-        test.deepEqual(session.properties, {
-            state:"start"
-        })
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
         test.ok(!session.completed);
 
         session = new SASLSession(mech);
         test.equal(session.mechanism, mech.name);
-        test.deepEqual(session.properties, {
-            state:"start"
-        })
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
         test.ok(!session.completed);
 
         test.done();
@@ -64,10 +61,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state:"complete",
+                    data:new Buffer("client initial")
+                });
             }
         };
         config = {};
@@ -95,12 +92,12 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial:" +
-                                            config.username + ":" +
-                                            config.password));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state:"complete",
+                    data: new Buffer("client initial:" +
+                                     config.username + ":" +
+                                     config.password)
+                });
             }
         };
         config = {username:"bilbo.baggins", password:"! 84G3nd"};
@@ -128,9 +125,8 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                var deferred = new promised_io.Deferred();
-                deferred.reject(new Error("mechanism failure"));
-                return deferred.promise;
+                return require("../lib/helpers.js").
+                       rejectPromise(new Error("mechanism failure"));
             }
         };
         config = {};
@@ -158,10 +154,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client initial")
+                });
             }
         };
         config = {};
@@ -201,10 +197,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "next";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "next",
+                    data: new Buffer("client initial")
+                });
             },
             stepNext: function(config, input) {
                 test.ok(config);
@@ -212,10 +208,10 @@ module.exports = {
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client next"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client next")
+                });
             }
         };
         config = {};
@@ -255,10 +251,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "next";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "next",
+                    data: new Buffer("client initial")
+                });
             },
             stepNext: function(config, input) {
                 test.ok(config);
@@ -266,10 +262,10 @@ module.exports = {
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client next"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client next")
+                });
             }
         };
         config = {};
@@ -309,10 +305,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "next";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "next",
+                    data: new Buffer("client initial")
+                });
             },
             stepNext: function(config, input) {
                 test.ok(config);
@@ -320,10 +316,10 @@ module.exports = {
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client next"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client next")
+                });
             }
         };
         config = {};
@@ -363,10 +359,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "next";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "next",
+                    data: new Buffer("client initial")
+                });
             },
             stepNext: function(config, input) {
                 test.ok(config);
@@ -374,10 +370,10 @@ module.exports = {
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client next"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client next")
+                });
             }
         };
         config = {};
@@ -417,10 +413,10 @@ module.exports = {
                 test.equal(config.state, "start");
                 test.ok(!input);
 
-                config.state = "next";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client initial"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "next",
+                    data: new Buffer("client initial")
+                });
             },
             stepNext: function(config, input) {
                 test.ok(config);
@@ -428,10 +424,10 @@ module.exports = {
                 test.ok(input instanceof Buffer);
                 test.equal(input.toString(), "server initial");
 
-                config.state = "complete";
-                var deferred = new promised_io.Deferred();
-                deferred.resolve(new Buffer("client next"));
-                return deferred.promise;
+                return promised_io.whenPromise({
+                    state: "complete",
+                    data: new Buffer("client next")
+                });
             }
         };
         config = {};
