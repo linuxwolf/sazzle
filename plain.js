@@ -4,18 +4,6 @@
 var promised_io = require("promised-io"),
     helpers = require("./lib/helpers.js");
 
-var _promisedValue = function(config, prop, username) {
-    var val = config[prop];
-    if (typeof(val) === "function") {
-        try {
-            val = val(config, username);
-        } catch (ex) {
-            return helpers.rejectPromise(ex);
-        }
-    }
-    return promised_io.whenPromise(val || "");
-}
-
 /**
  * client config properties:
  * - username : string || function(config) { return string || promise }
@@ -32,12 +20,12 @@ exports.client = {
         var deferred = new promised_io.Deferred();
 
         promised_io.seq([
-            function() { return _promisedValue(config, "username"); },
+            function() { return helpers.promisedValue(config, "username"); },
             function(usr) {
                 return promised_io.all(
-                    _promisedValue(config, "authzid", usr),
+                    helpers.promisedValue(config, "authzid", usr),
                     promised_io.whenPromise(usr),
-                    _promisedValue(config, "password", usr)
+                    helpers.promisedValue(config, "password", usr)
                 );
             }
         ]).then( function(factors) {
@@ -105,12 +93,12 @@ exports.server = {
             pwd = input[2] || "";
 
         promised_io.seq([
-            function() { return _promisedValue(config, "username"); },
+            function() { return helpers.promisedValue(config, "username"); },
             function(cfgUser) {
                 cfgUser = cfgUser || usr;
                 return promised_io.all(promised_io.whenPromise(cfgUser),
-                                       _promisedValue(config, "password", cfgUser),
-                                       _promisedValue(config, "authzid", cfgUser));
+                                       helpers.promisedValue(config, "password", cfgUser),
+                                       helpers.promisedValue(config, "authzid", cfgUser));
             }
         ]).then(function(factors) {
                 if (    (factors[0] !== usr) ||
