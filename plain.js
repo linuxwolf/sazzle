@@ -68,7 +68,7 @@ exports.client = {
  *   + if missing, CONTINUE
  *   + if present, input value MUST match (or FAIL)
  * - password : string || function(config, username) { return string || promise }
- *   + if missing, CONTINUE
+ *   + if missing, input value MUST be "" (or FAIL)
  *   + if present, input value MUST match (or FAIL)
  * - authzid  : string || function(config, username) { return string || promise }
  *   + if missing, SUCCEED
