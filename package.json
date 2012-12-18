@@ -3,7 +3,7 @@
     "version" : "0.0.0",
     "main" : "./index.js",
     "dependencies" : {
-        "promised-io" : "~0.3"
+        "q": "~0.8"
     },
     "devDependencies" : {
         "nodeunit" : "*"

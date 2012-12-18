@@ -1,7 +1,7 @@
 /*!
  * plain.js - implementation of PLAIN mechanism
  */
-var promised_io = require("promised-io"),
+var q = require("q"),
     helpers = require("./lib/helpers.js");
 
 /**
@@ -17,48 +17,37 @@ var promised_io = require("promised-io"),
 exports.client = {
     name: "PLAIN",
     stepStart: function(config) {
-        var deferred = new promised_io.Deferred();
+        var deferred = q.defer();
 
-        promised_io.seq([
-            function() { return helpers.promisedValue(config, "username"); },
-            function(usr) {
-                return promised_io.all(
-                    helpers.promisedValue(config, "authzid", usr),
-                    promised_io.whenPromise(usr),
-                    helpers.promisedValue(config, "password", usr)
-                );
-            }
-        ]).then( function(factors) {
-                config.authPlain = {
-                    username: factors[1],
-                    authzid:  factors[0] || factors[1]
-                };
-                var data = factors.join("\u0000");
-                deferred.resolve({
-                    state:"verify",
-                    data: new Buffer(data, "binary")
-                });
-            },
-            function(err) {
-                deferred.reject(err);
-            }
-        );
-        return deferred.promise;
+        return helpers.promisedValue(config, "username").
+                then(function(usr) {
+                    return q.all([
+                        helpers.promisedValue(config, "authzid", usr),
+                        q.resolve(usr),
+                        helpers.promisedValue(config, "password", usr)
+                    ]);
+                }).
+                then(function(factors) {
+                        config.authPlain = {
+                            username: factors[1],
+                            authzid:  factors[0] || factors[1]
+                        };
+                        var data = factors.join("\u0000");
+                        return q.resolve({
+                            state:"verify",
+                            data: new Buffer(data, "binary")
+                        });
+                     });
     },
     "stepVerify": function(config, input) {
-        var deferred = new promised_io.Deferred();
-
         if (input) {
-            deferred.reject(new Error("unexpected data"));
-        } else {
-            deferred.resolve({
-                state:"complete",
-                username: config.authPlain.username,
-                authzid:  config.authPlain.authzid
-            });
+            return q.reject(new Error("unexpected data"));
         }
-
-        return deferred.promise;
+        return q.resolve({
+            state:"complete",
+            username: config.authPlain.username,
+            authzid:  config.authPlain.authzid
+        });
     }
 };
 
@@ -84,42 +73,34 @@ exports.server = {
             return promised_io.when(null);
         }
 
-        var deferred = new promised_io.Deferred();
-        var handled = false;
+        var deferred = q.defer();
 
         input = input.toString("binary").split("\u0000");
         var authz = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
 
-        promised_io.seq([
-            function() { return helpers.promisedValue(config, "username"); },
-            function(cfgUser) {
-                cfgUser = cfgUser || usr;
-                return promised_io.all(promised_io.whenPromise(cfgUser),
-                                       helpers.promisedValue(config, "password", cfgUser),
-                                       helpers.promisedValue(config, "authzid", cfgUser));
-            }
-        ]).then(function(factors) {
-                if (    (factors[0] !== usr) ||
-                        (factors[1] !== pwd) ||
-                        (authz && factors[2] !== authz)) {
-                    deferred.reject(new Error("not authorized"));
-                    return;
-                }
+        return helpers.promisedValue(config, "username").
+                then(function(cfgUsr) {
+                    cfgUsr = cfgUsr || usr;
+                    return q.all([
+                        q.resolve(cfgUsr),
+                        helpers.promisedValue(config, "password", cfgUsr),
+                        helpers.promisedValue(config, "authzid", cfgUsr)
+                    ]);
+                }).then(function(factors) {
+                    if (    (factors[0] !== usr) ||
+                            (factors[1] !== pwd) ||
+                            (authz && factors[2] !== authz)) {
+                        return q.reject(new Error("not authorized"));
+                    }
 
-                authz = factors[2] || authz || usr;
-                deferred.resolve({
-                    username: usr,
-                    authzid:  authz,
-                    state:    "complete"
-                })
-            }, function(err) {
-                !handled && deferred.reject(err);
-                handled = true;
-            }
-        );
-
-        return deferred.promise;
+                    authz = factors[2] || authz || usr;
+                    return q.resolve({
+                        username: usr,
+                        authzid:  authz,
+                        state:    "complete"
+                    })
+                });
     }
 }

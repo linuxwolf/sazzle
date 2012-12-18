@@ -1,7 +1,8 @@
 /*!
  * test/test-PLAIN.js - PLAIN Mechanism Tests
  */
-var promised_io = require("promised-io"),
+var q = require("q"),
+    tutils = require("./utils.js"),
     helpers = require("../lib/helpers.js"),
     PLAIN = require("../plain.js");
 
@@ -15,10 +16,8 @@ module.exports = {
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -26,14 +25,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -41,10 +39,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (username callback value)": function(test) {
             var config = {
@@ -57,10 +57,8 @@ module.exports = {
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -68,14 +66,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -83,28 +80,26 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (username callback promise)": function(test) {
             var config = {
                 state:"start",
                 username:function(cfg) {
                     test.strictEqual(cfg, config);
-                    var deferred = new promised_io.Deferred();
-                    deferred.resolve("bilbo.baggins");
-                    return deferred.promise;
+                    return q.resolve("bilbo.baggins");
                 },
                 password:"! 84G3nd"
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -112,14 +107,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -127,23 +121,23 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (username promise)": function(test) {
             var config = {
                 state:"start",
-                username:promised_io.whenPromise("bilbo.baggins"),
+                username:q.resolve("bilbo.baggins"),
                 password:"! 84G3nd"
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -151,14 +145,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -166,10 +159,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (password callback value)" : function(test) {
             var config = {
@@ -183,10 +178,8 @@ module.exports = {
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -194,14 +187,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -209,10 +201,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (password callback promise)" : function(test) {
             var config = {
@@ -221,17 +215,13 @@ module.exports = {
                 password:function(cfg, username) {
                     test.strictEqual(cfg, config);
                     test.strictEqual(username, config.username);
-                    var deferred = new promised_io.Deferred();
-                    deferred.resolve("! 84G3nd");
-                    return deferred.promise;
+                    return q.resolve("! 84G3nd");
                 }
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -239,14 +229,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -254,23 +243,23 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (password promise)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
-                password:promised_io.whenPromise("! 84G3nd")
+                password:q.resolve("! 84G3nd")
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -278,14 +267,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -293,10 +281,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (authzid)": function(test) {
             var config = {
@@ -307,10 +297,8 @@ module.exports = {
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -318,14 +306,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -333,10 +320,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (authzid callback value)": function(test) {
             var config = {
@@ -351,10 +340,8 @@ module.exports = {
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -362,14 +349,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -377,10 +363,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (authzid callback promise)": function(test) {
             var config = {
@@ -390,17 +378,13 @@ module.exports = {
                 authzid:function(cfg, username) {
                     test.strictEqual(cfg, config);
                     test.strictEqual(username, config.username);
-                    var deferred = new promised_io.Deferred();
-                    deferred.resolve("mayor@hobbiton.lit");
-                    return deferred.promise;
+                    return q.resolve("mayor@hobbiton.lit");
                 }
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -408,14 +392,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -423,24 +406,24 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test success (authzid promise)": function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:promised_io.whenPromise("mayor@hobbiton.lit")
+                authzid:q.resolve("mayor@hobbiton.lit")
             };
             var mech = PLAIN.client;
 
-            var promise = mech.stepStart(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+            var promise;
+            var startResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
                 test.equal(out.state, "verify");
@@ -448,14 +431,13 @@ module.exports = {
                 var data = out.data;
                 test.ok(data instanceof Buffer);
                 test.equal(data.toString(), "mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd");
-            }, function(err) {
-                test.fail(err && err.message);
-            });
 
-            promise = mech.stepVerify(config);
-            test.ok(promise);
-            test.equal(typeof(promise.then), "function");
-            promise.then(function(out) {
+                promise = mech.stepVerify(config);
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(verifyResolved, tutils.unexpectedFail(test));
+            };
+            var verifyResolved = function(out) {
                 test.ok(out);
                 test.ok(typeof(out) === "object");
 
@@ -463,10 +445,12 @@ module.exports = {
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "mayor@hobbiton.lit");
                 test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         },
         "test failure (username callback error)": function(test) {
             var config = {
@@ -541,7 +525,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:function(config) {
-                    return helpers.rejectPromise(new Error("username callback rejected"));
+                    return q.reject(new Error("username callback rejected"));
                 },
                 password:"! 84G3nd",
                 authzid:"mayor@hobbiton.lit"
@@ -565,7 +549,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:function(config) {
-                    return helpers.rejectPromise(new Error("password callback rejected"));
+                    return q.reject(new Error("password callback rejected"));
                 },
                 authzid:"mayor@hobbiton.lit"
             };
@@ -589,7 +573,7 @@ module.exports = {
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
                 authzid:function(config, username) {
-                    return helpers.rejectPromise(new Error("authzid callback rejected"));
+                    return q.reject(new Error("authzid callback rejected"));
                 }
             };
             var mech = PLAIN.client;
@@ -609,7 +593,7 @@ module.exports = {
         "test failure (username promise reject)": function(test) {
             var config = {
                 state:"start",
-                username:helpers.rejectPromise(new Error("username callback rejected")),
+                username:q.reject(new Error("username callback rejected")),
                 password:"! 84G3nd",
                 authzid:"mayor@hobbiton.lit"
             };
@@ -631,7 +615,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
-                password:helpers.rejectPromise(new Error("password callback rejected")),
+                password:q.reject(new Error("password callback rejected")),
                 authzid:"mayor@hobbiton.lit"
             };
             var mech = PLAIN.client;
@@ -653,7 +637,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:helpers.rejectPromise(new Error("authzid callback rejected"))
+                authzid:q.reject(new Error("authzid callback rejected"))
             };
             var mech = PLAIN.client;
 
@@ -719,7 +703,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:function(config) {
-                    return promised_io.whenPromise("bilbo.baggins");
+                    return q.resolve("bilbo.baggins");
                 },
                 password:"! 84G3nd"
             };
@@ -742,7 +726,7 @@ module.exports = {
         "test success (username promise)" : function(test) {
             var config = {
                 state:"start",
-                username:promised_io.whenPromise("bilbo.baggins"),
+                username:q.resolve("bilbo.baggins"),
                 password:"! 84G3nd"
             };
             var mech = PLAIN.server;
@@ -792,7 +776,7 @@ module.exports = {
                 username:"bilbo.baggins",
                 password:function(config, username) {
                     test.equal(username, "bilbo.baggins");
-                    return promised_io.whenPromise("! 84G3nd");
+                    return q.resolve("! 84G3nd");
                 }
             };
             var mech = PLAIN.server;
@@ -815,7 +799,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
-                password:promised_io.whenPromise("! 84G3nd")
+                password:q.resolve("! 84G3nd")
             };
             var mech = PLAIN.server;
 
@@ -889,7 +873,7 @@ module.exports = {
                 password:"! 84G3nd",
                 authzid:function(config, username) {
                     test.equal(username, "bilbo.baggins");
-                    return promised_io.whenPromise("mayor@hobbiton.lit");
+                    return q.resolve("mayor@hobbiton.lit");
                 }
             };
             var mech = PLAIN.server;
@@ -913,7 +897,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:promised_io.whenPromise("mayor@hobbiton.lit")
+                authzid:q.resolve("mayor@hobbiton.lit")
             };
             var mech = PLAIN.server;
 
@@ -987,7 +971,7 @@ module.exports = {
                 password:"! 84G3nd",
                 authzid:function(config, username) {
                     test.equal(username, "bilbo.baggins");
-                    return promised_io.whenPromise("mayor@hobbiton.lit");
+                    return q.resolve("mayor@hobbiton.lit");
                 }
             };
             var mech = PLAIN.server;
@@ -1011,7 +995,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:promised_io.whenPromise("mayor@hobbiton.lit")
+                authzid:q.resolve("mayor@hobbiton.lit")
             };
             var mech = PLAIN.server;
 
@@ -1167,7 +1151,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:function(config) {
-                    return helpers.rejectPromise(new Error("username callback rejected"));
+                    return q.reject(new Error("username callback rejected"));
                 },
                 password:"! 84G3nd",
                 authzid:"mayor@hobbiton.lit"
@@ -1192,7 +1176,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:function(config) {
-                    return helpers.rejectPromise(new Error("password callback rejected"));
+                    return q.reject(new Error("password callback rejected"));
                 }
             };
             var mech = PLAIN.server;
@@ -1216,7 +1200,7 @@ module.exports = {
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
                 authzid:function(config) {
-                    return helpers.rejectPromise(new Error("authzid callback rejected"));
+                    return q.reject(new Error("authzid callback rejected"));
                 }
             };
             var mech = PLAIN.server;
@@ -1237,7 +1221,7 @@ module.exports = {
         "test failure (username promise reject)" : function(test) {
             var config = {
                 state:"start",
-                username:helpers.rejectPromise(new Error("username callback rejected")),
+                username:q.reject(new Error("username callback rejected")),
                 password:"! 84G3nd",
                 authzid:"mayor@hobbiton.lit"
             };
@@ -1260,7 +1244,7 @@ module.exports = {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
-                password:helpers.rejectPromise(new Error("password callback rejected")),
+                password:q.reject(new Error("password callback rejected")),
                 authzid:"mayor@hobbiton.lit"
             };
             var mech = PLAIN.server;
@@ -1283,7 +1267,7 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:helpers.rejectPromise(new Error("authzid callback rejected"))
+                authzid:q.reject(new Error("authzid callback rejected"))
             };
             var mech = PLAIN.server;
 
@@ -1303,4 +1287,4 @@ module.exports = {
     }
 }
 
-require("./utils.js").run(module);
+tutils.run(module);

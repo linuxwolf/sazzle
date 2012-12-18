@@ -4,6 +4,5 @@
 
 module.exports = {
     "session" : require("./test-session.js"),
-    "PLAIN mechanism" : require("./test-PLAIN.js"),
-    "SCRAM-SHA1 mechanism" : require("./test-SCRAM-SHA1.js")
+    "PLAIN mechanism" : require("./test-PLAIN.js")
 }
