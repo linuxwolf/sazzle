@@ -412,67 +412,78 @@ exports.server = {
         delete fields.binding;
         delete fields.nonce;
 
-        return __parseClientFields(fields, input, ["c", "r", "p"]).
-               then(function(fields) {
-                    return q.all([
-                        helpers.promisedValue(config, "password", fields.username),
-                        helpers.promisedValue(config, "authzid", fields.username)
-                    ]);
-               }).then(function(factors) {
-                    var pwd = factors[0],
-                        authzid = factors[1],
-                        binding = fields.binding,
-                        nonce = fields.nonce;
-                    var usrProof;
+        return q.all([
+            __parseClientFields(fields, input, ["c", "r", "p"]),
+            helpers.promisedValue(config, "password", fields.username)
+        ]).then(function(factors) {
+            var fields = factors[0],
+                pwd = factors[1],
+                binding = fields.binding,
+                nonce = fields.nonce;
+            var usrProof;
 
-                    // validate binding/nonce
-                    if (fields.binding !== binding) {
-                        return q.reject(new Error("invalid binding"));
-                    }
-                    if (fields.nonce !== nonce) {
-                        return q.reject(new Error("invalid nonce"));
-                    }
+            // validate binding/nonce
+            if (fields.binding !== binding) {
+                return q.reject(new Error("invalid binding"));
+            }
+            if (fields.nonce !== nonce) {
+                return q.reject(new Error("invalid nonce"));
+            }
 
-                    // recalculate client-final-message-without-proof
-                    fields.messages.push([
-                        "c=" + fields.binding,
-                        "r=" + fields.nonce
-                    ].join(","));
+            // recalculate client-final-message-without-proof
+            fields.messages.push([
+                "c=" + fields.binding,
+                "r=" + fields.nonce
+            ].join(","));
 
-                    // calculate proof
-                    var key,
-                        sig,
-                        proof;
-                    pwd = calcSaltedPwd(pwd,
-                                        fields.salt,
-                                        fields.iterations);
-                    key = calcClientKey(pwd);
-                    sig = calcClientSig(key, fields.messages.join(","));
-                    proof = calcClientProof(key, sig);
-                    if (proof !== usrProof) {
-                        return q.reject(new Error("not authorized"));
-                    }
+            // calculate proof
+            var key,
+                sig,
+                proof;
+            pwd = calcSaltedPwd(pwd,
+                                fields.salt,
+                                fields.iterations);
+            key = calcClientKey(pwd);
+            sig = calcClientSig(key, fields.messages.join(","));
+            proof = calcClientProof(key, sig);
+            if (proof !== usrProof) {
+                return q.reject(new Error("not authorized"));
+            }
 
-                    // validate authzid
-                    if (    authzid &&
-                            fields.authzid &&
-                            authzid !== fields.authzid) {
-                        return q.reject(new Error("not authorized"));
-                        return;
-                    }
+            // validate authzid
+            if (    authzid &&
+                    fields.authzid &&
+                    authzid !== fields.authzid) {
+                return q.reject(new Error("not authorized"));
+                return;
+            }
 
-                    // calculate ServerSignature
-                    key = calcServerKey(pwd);
-                    sig = calcServerSig(key, fields.messages.join(","));
+            // calculate ServerSignature
+            key = calcServerKey(pwd);
+            sig = calcServerSig(key, fields.messages.join(","));
+            fields.verification = sig;
 
-                    var data = "v=" + new Buffer(sig, "binary").
-                               toString("base64");
-                    return q.resolve({
-                        state:"complete",
-                        data:data,
-                        username:fields.username,
-                        authzid:authzid || fields.authzid || fields.username
-                    });
-               });
+            var authz = config.authorize;
+            if          (typeof(authz) === "function") {
+                authz = authz(config, usr, authzid);
+            } else if   (authz == null) {
+                authz = !authzid || (usr === authzid);
+            }
+
+            return q.resolve(authz);
+        }).then(function(result) {
+            if (!result) {
+                return q.reject(new Error("not authorized"));
+            }
+
+            var data = "v=" + new Buffer(fields.verification, "binary").
+                       toString("base64");
+            return q.resolve({
+                state:"complete",
+                data:data,
+                username:fields.username,
+                authzid:fields.authzid || fields.username
+            });
+        });
     }
 };
