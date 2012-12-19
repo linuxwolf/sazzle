@@ -59,12 +59,21 @@ exports.client = {
  * - password : string || function(config, username) { return string || promise }
  *   + if missing, input value MUST be "" (or FAIL)
  *   + if present, input value MUST match (or FAIL)
- * - authzid  : string || function(config, username) { return string || promise }
- *   + if missing, SUCCEED
- *   + if present, check input value
- *                 + if missing, SUCCEED with config value
- *                 + if present, MUST match config value (or FAIL) 
+ * - authorize : function(config, username, authzid) { return boolean || promise }
+ *   + if missing, then
+ *      + if authzid missing, SUCCEED
+ *      + if authzid matches username, SUCCEED
+ *      + else FAIL
+ *   + if present; true == SUCCEED, false == FAIL
  */
+
+var __doAuthorize = function(config, username, authzid) {
+    if (!authzid || (username === authzid)) {
+        return q.resolve(authzid || username);
+    } else {
+        return q.reject(new Error("not authorized"));
+    }
+}
 
 exports.server = {
     name: "PLAIN",
@@ -76,7 +85,7 @@ exports.server = {
         var deferred = q.defer();
 
         input = input.toString("binary").split("\u0000");
-        var authz = input[0] || "",
+        var authzid = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
 
@@ -86,21 +95,31 @@ exports.server = {
                     return q.all([
                         q.resolve(cfgUsr),
                         helpers.promisedValue(config, "password", cfgUsr),
-                        helpers.promisedValue(config, "authzid", cfgUsr)
                     ]);
                 }).then(function(factors) {
                     if (    (factors[0] !== usr) ||
-                            (factors[1] !== pwd) ||
-                            (authz && factors[2] !== authz)) {
+                            (factors[1] !== pwd)) {
                         return q.reject(new Error("not authorized"));
                     }
 
-                    authz = factors[2] || authz || usr;
-                    return q.resolve({
-                        username: usr,
-                        authzid:  authz,
-                        state:    "complete"
-                    })
+                    var authz = config.authorize;
+                    if          (typeof(authz) === "function") {
+                        authz = authz(config, usr, authzid);
+                    } else if   (authz == null) {
+                        authz = !authzid || (usr === authzid);
+                    }
+
+                    return q.resolve(authz);
+                }).then(function(result) {
+                    if (result) {
+                        return q.resolve({
+                            state:"complete",
+                            username:usr,
+                            authzid:authzid || usr
+                        })
+                    } else {
+                        return q.reject(new Error("not authorized"));
+                    }
                 });
     }
 }

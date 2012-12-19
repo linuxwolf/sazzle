@@ -817,37 +817,17 @@ module.exports = {
                 test.done();
             });
         },
-        "test success (authzid)" : function(test) {
+        "test success (authorize callback boolean)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:"mayor@hobbiton.lit"
-            };
-            var mech = PLAIN.server;
+                authorize:function(cfg, username, authzid) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(username, "bilbo.baggins");
+                    test.strictEqual(authzid, "mayor@hobbiton.lit");
 
-            var promise = mech.stepStart(config,
-                                         new Buffer("mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "mayor@hobbiton.lit");
-                test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
-        },
-        "test success (authzid callback value)" : function(test) {
-            var config = {
-                state:"start",
-                username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:function(config, username) {
-                    test.equal(username, "bilbo.baggins");
-                    return "mayor@hobbiton.lit";
+                    return true;
                 }
             };
             var mech = PLAIN.server;
@@ -866,14 +846,17 @@ module.exports = {
                 test.done();
             });
         },
-        "test success (authzid callback promise)" : function(test) {
+        "test success (authorize callback promise)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:function(config, username) {
-                    test.equal(username, "bilbo.baggins");
-                    return q.resolve("mayor@hobbiton.lit");
+                authorize:function(cfg, username, authzid) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(username, "bilbo.baggins");
+                    test.strictEqual(authzid, "mayor@hobbiton.lit");
+
+                    return q.resolve(true);
                 }
             };
             var mech = PLAIN.server;
@@ -892,115 +875,17 @@ module.exports = {
                 test.done();
             });
         },
-        "test success (authzid promise)" : function(test) {
+        "test success (authorize promise)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:q.resolve("mayor@hobbiton.lit")
+                authorize:q.resolve(true)
             };
             var mech = PLAIN.server;
 
             var promise = mech.stepStart(config,
                                          new Buffer("mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "mayor@hobbiton.lit");
-                test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
-        },
-        "test success (server authzid)" : function(test) {
-            var config = {
-                state:"start",
-                username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:"mayor@hobbiton.lit"
-            };
-            var mech = PLAIN.server;
-
-            var promise = mech.stepStart(config,
-                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "mayor@hobbiton.lit");
-                test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
-        },
-        "test success (server authzid callback value)" : function(test) {
-            var config = {
-                state:"start",
-                username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:function(config, username) {
-                    test.equal(username, "bilbo.baggins");
-                    return "mayor@hobbiton.lit";
-                }
-            };
-            var mech = PLAIN.server;
-
-            var promise = mech.stepStart(config,
-                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "mayor@hobbiton.lit");
-                test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
-        },
-        "test success (server authzid callback promise)" : function(test) {
-            var config = {
-                state:"start",
-                username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:function(config, username) {
-                    test.equal(username, "bilbo.baggins");
-                    return q.resolve("mayor@hobbiton.lit");
-                }
-            };
-            var mech = PLAIN.server;
-
-            var promise = mech.stepStart(config,
-                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "mayor@hobbiton.lit");
-                test.done();
-            }, function(err) {
-                test.fail(err && err.message);
-                test.done();
-            });
-        },
-        "test success (server authzid promise)" : function(test) {
-            var config = {
-                state:"start",
-                username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:q.resolve("mayor@hobbiton.lit")
-            };
-            var mech = PLAIN.server;
-
-            var promise = mech.stepStart(config,
-                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
             test.ok(promise);
             test.ok(typeof(promise.then) === "function");
             promise.then(function(out) {
@@ -1059,13 +944,12 @@ module.exports = {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
-                password:"! 84G3nd",
-                authzid:"mayor@hobbiton.lit"
+                password:"! 84G3nd"
             };
             var mech = PLAIN.server;
 
             var promise = mech.stepStart(config,
-                                         new Buffer("thief@thorin-party.lit\u0000bilbo.baggins\u0000! 84G3nd"));
+                                         new Buffer("mayor@hobbiton.lit\u0000bilbo.baggins\u0000! 84G3nd"));
             test.ok(promise);
             test.ok(typeof(promise.then) === "function");
             promise.then(function(out) {
@@ -1123,13 +1007,13 @@ module.exports = {
                 test.done();
             });
         },
-        "test failure (authzid callback error)" : function(test) {
+        "test failure (authorize callback error)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:function(config) {
-                    throw new Error("authzid callback errored");
+                authorize:function(cfg, username, authzid) {
+                    throw new Error("authorize callback errored");
                 }
             };
             var mech = PLAIN.server;
@@ -1143,7 +1027,7 @@ module.exports = {
                 test.done();
             }, function(err) {
                 test.ok(err instanceof Error);
-                test.equal(err.message, "authzid callback errored");
+                test.equal(err.message, "authorize callback errored");
                 test.done();
             });
         },
@@ -1194,13 +1078,13 @@ module.exports = {
                 test.done();
             });
         },
-        "test failure (authzid callback reject)" : function(test) {
+        "test failure (authorize callback reject)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:function(config) {
-                    return q.reject(new Error("authzid callback rejected"));
+                authorize:function(cfg, username, authzid) {
+                    return q.reject(new Error("authorize callback rejected"));
                 }
             };
             var mech = PLAIN.server;
@@ -1214,7 +1098,7 @@ module.exports = {
                 test.done();
             }, function(err) {
                 test.ok(err instanceof Error);
-                test.equal(err.message, "authzid callback rejected");
+                test.equal(err.message, "authorize callback rejected");
                 test.done();
             });
         },
@@ -1262,12 +1146,12 @@ module.exports = {
                 test.done();
             });
         },
-        "test failure (authzid promise reject)" : function(test) {
+        "test failure (authorize promise reject)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd",
-                authzid:q.reject(new Error("authzid callback rejected"))
+                authorize:q.reject(new Error("authorize callback rejected"))
             };
             var mech = PLAIN.server;
 
@@ -1280,7 +1164,7 @@ module.exports = {
                 test.done();
             }, function(err) {
                 test.ok(err instanceof Error);
-                test.equal(err.message, "authzid callback rejected");
+                test.equal(err.message, "authorize callback rejected");
                 test.done();
             });
         }
