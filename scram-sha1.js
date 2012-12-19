@@ -3,7 +3,7 @@
  */
 
 var crypto = require("crypto"),
-    promised_io = require("promised-io"),
+    q = require("q"),
     helpers = require("./lib/helpers.js");
 
 var _XOR = function(s1, s2, encoding) {
@@ -64,406 +64,415 @@ var calcServerSig = function(key, msg) {
                   digest("binary");
 }
 
-var PTN_FIELD = /([^\=]+)\=(.+)/g;
+var PTN_FIELD = /^([^\=]+)\=(.+)$/;
 
+var __parseServerFields = function(fields, input, expected, allowed) {
+    var unexpected = [];
+    expected = (expected || []).slice();
+    allowed = (allowed || []).slice();
+
+    try {
+        input.forEach(function(f) {
+            f = PTN_FIELD.exec(f);
+            if (!f) {
+                throw new Error("invalid field");
+            }
+
+            var pos;
+            pos = expected.indexOf(f[1]);
+            if (pos !== -1) {
+                expected.splice(pos, 1);
+            }
+            pos = allowed.indexOf(f[1]);
+            if (pos !== -1) {
+                allowed.splice(pos, 1);
+            }
+            switch (f[1]) {
+                case "i":   // iterations
+                    fields["iterations"] = parseInt(f[2]);
+                    break;
+                case "r":   // nonce
+                    fields["nonce"] = f[2];
+                    break;
+                case "s":   // salt
+                    fields["salt"] = new Buffer(f[2], "base64").
+                                     toString("binary");
+                    break;
+                case "v":   // verification 
+                    fields["verification"] = new Buffer(f[2], "base64").
+                                             toString("binary");
+                    break;
+                default:
+                    unexpected.push(f[1]);
+                    break;
+            }
+
+        });
+    } catch (ex) {
+        return q.reject(ex);
+    }
+
+    if          (unexpected.length) {
+        var err = new Error("unexpected fields");
+        err.fields = unexpected;
+        return q.reject(err);
+    } else if   (expected.length) {
+        var err = new Error("missing fields");
+        err.fields = expected;
+        return q.reject(err);
+    } else {
+        return q.resolve(fields);
+    }
+};
 exports.client = {
     name: "SCRAM-SHA1",
     stepStart: function(config) {
-        var deferred = new promised_io.Deferred();
-        promised_io.seq([
-            function() { return helpers.promisedValue(config, "username"); },
-            function(usr) {
-                return promised_io.all(
-                    promised_io.whenPromise(usr),
-                    helpers.promisedValue(config, "nonce"),
-                    helpers.promisedValue(config, "authzid", usr)
-                );
-            }
-        ]).then(function(factors) {
-                var info = config.authScram = {};
-                info.username = factors[0];
-                info.nonce = factors[1];
-                info.authzid = factors[2];
-                info.binding = [
-                    "n",
-                    (info.authzid ? "a=" + info.authzid : ""),
-                    ""
-                ].join(",");
+        return helpers.promisedValue(config, "username").
+               then(function(usr) {
+                    return q.all([
+                        q.resolve(usr),
+                        helpers.promisedValue(config, "nonce"),
+                        helpers.promisedValue(config, "authzid", usr)
+                    ]);
+               }).
+               then(function(factors) {
+                    var fields = config.authScram = {};
+                    fields.username = factors[0];
+                    fields.nonce = factors[1];
+                    fields.authzid = factors[2];
+                    fields.binding = [
+                        "n",
+                        (fields.authzid ? "a=" + fields.authzid : ""),
+                        ""
+                    ].join(",");
 
-                if (!info.nonce) {
-                    info.nonce = crypto.randomBytes(24).
-                                        toString("base64");
-                }
+                    if (!fields.nonce) {
+                        fields.nonce = crypto.randomBytes(24).
+                                              toString("base64");
+                    }
 
-                var data = [
-                    "n=" + info.username,
-                    "r=" + info.nonce
-                ].join(",");
-                info.messages = [data];
+                    var data = [
+                        "n=" + fields.username,
+                        "r=" + fields.nonce
+                    ].join(",");
+                    fields.messages = [data];
 
-                data = info.binding + data;
+                    data = fields.binding + data;
 
-                deferred.resolve({
-                    state:"auth",
-                    data:data
-                });
-            },
-            function(err) {
-                deferred.reject(err);
-            }
-        );
-
-        return deferred.promise;
+                    return q.resolve({
+                        state:"auth",
+                        data:data
+                    });
+               });
     },
     stepAuth: function(config, input) {
-        input = input.toString("binary");
+        input = input.toString("binary").
+                split(",");
 
-        var info = config.authScram;
-        var deferred = new promised_io.Deferred();
-        helpers.promisedValue(config, "password", info.username).
-        then(function(pwd) {
+        var fields = config.authScram;
+        var nonce = fields.nonce;
+        delete fields.nonce;
+
+        return q.all([
+            __parseServerFields(fields, input,  ["r", "s", "i"]),
+            helpers.promisedValue(config, "password", fields.username)
+        ]).then(function(factors) {
+            var fields = factors[0];
+            var pwd = factors[1];
+
             // store server-first-message
-            info.messages.push(input);
+            fields.messages.push(input.join(","));
 
             // finish calculating binding
-            info.binding = new Buffer(info.binding, "binary").
-                           toString("base64");
+            fields.binding = new Buffer(fields.binding, "binary").
+                             toString("base64");
 
-            var nonce = info.nonce;
-            delete info.nonce;
-
-            // deconstruct input
-            var fields = ["r", "s", "i"],
-                extra = [];
-            input = input.split(",");
-            input.forEach(function(f) {
-                f = PTN_FIELD.exec(f);
-
-                var fIdx = fields.indexOf(f[1]);
-                if (fIdx !== -1) {
-                    fields.splice(fIdx, 1);
-                }
-                switch(f[1]) {
-                    case "r":
-                        info.nonce = f[2];
-                        break;
-                    case "s":
-                        info.salt = new Buffer(f[2], "base64").
-                                      toString("binary");
-                        break;
-                    case "i":
-                        info.iterations = parseInt(f[2]);
-                        break;
-                    default:
-                        extra.push(f[1]);
-                        break;
-                }
-            });
-
-            // validate all mandatory fields are processed
-            if (fields.length) {
-                var err = new Error("missing fields");
-                err.fields = fields;
-                deferred.reject(err);
-                return;
-            }
-            // validate no extra fields
-            if (extra.length) {
-                var err = new Error("extra fields");
-                err.fields = extra;
-                deferred.reject(err);
-                return;
-            }
             // validate server nonce starts with client nonce
-            if (info.nonce.substring(0, nonce.length) !== nonce) {
-                deferred.reject(new Error("nonce mismatch"));
-                return;
+            if (fields.nonce.substring(0, nonce.length) !== nonce) {
+                return q.reject(new Error("nonce mismatch"));
             }
+
             // validate iterations is greater than 0
-            if (isNaN(info.iterations) || info.iterations <= 0) {
-                deferred.reject(new Error("invalid iteration"));
-                return;
+            if (isNaN(fields.iterations) || fields.iterations <= 0) {
+                return q.reject(new Error("invalid iteration"));
             }
 
             // (start to) construct client-final-message
             var message = [
-                "c=" + info.binding,
-                "r=" + info.nonce
+                "c=" + fields.binding,
+                "r=" + fields.nonce
             ];
             // store client-final-message-without-proof
-            info.messages.push(message.join(","));
+            fields.messages.push(message.join(","));
 
             // calculate SaltedPassword, ClientKey, ClientSig, ClientProof
             var key, proof, sig;
-            pwd = calcSaltedPwd(pwd, info.salt, info.iterations);
+            pwd = calcSaltedPwd(pwd, fields.salt, fields.iterations);
             key = calcClientKey(pwd);
-            sig = calcClientSig(key, info.messages.join(","));
+            sig = calcClientSig(key, fields.messages.join(","));
             proof = calcClientProof(key, sig);
 
             // store SaltedPassword for verify
-            info.password = pwd;
+            fields.password = pwd;
 
             message.push("p=" + proof);
-            deferred.resolve({
+            return q.resolve({
                 state:"verify",
                 data:message.join(",")
-            })
-        }, function(err) {
-            deferred.reject(err);
+            });
         });
-
-        return deferred.promise;
     },
     stepVerify: function(config, input) {
-        input = input.toString("binary");
+        input = input.toString("binary").
+                split(",");
 
-        var info = config.authScram;
-        var deferred = new promised_io.Deferred();
+        var fields = config.authScram;
+        return __parseServerFields(fields, input, ["v"]).
+               then(function(fields) {
+                    // validate non-empty verification
+                    if (!fields.verification) {
+                        return q.reject(new Error("missing verification"));
+                    }
 
-        promised_io.whenPromise(input).
-        then(function(input) {
-            // deconstruct input
-            var verification;
-            input = input.split(",");
-            input.forEach(function(f) {
-                f = PTN_FIELD.exec(f);
+                    // Calculate ServerKey, ServerSignature
+                    var key, sig;
+                    key = calcServerKey(fields.password);
+                    sig = calcServerSig(key, fields.messages.join(","));
 
-                switch(f[1]) {
-                    case "v":
-                        verification = new Buffer(f[2], "base64").
-                                       toString("binary");
-                        break;
-                }
-            });
-
-            // validate non-empty verification
-            if (!verification) {
-                deferred.reject(new Error("missing verification"));
-                return;
-            }
-
-            // Calculate ServerKey, ServerSignature
-            var key, sig;
-            key = calcServerKey(info.password);
-            sig = calcServerSig(key, info.messages.join(","));
-
-            if (verification !== sig) {
-                deferred.reject(new Error("verification failed"));
-            } else {
-                deferred.resolve({
-                    state:"complete",
-                    username:info.username,
-                    authzid:info.authzid || info.username
-                });
-            }
-        }, function(err) {
-            deferred.reject(err);
-        });
+                    if (fields.verification !== sig) {
+                        return q.reject(new Error("verification failed"));
+                    } else {
+                        return q.resolve({
+                            state:"complete",
+                            username:fields.username,
+                            authzid:fields.authzid || fields.username
+                        });
+                    }
+               });
 
         return deferred.promise;
     }
 };
+
+var __parseClientFields = function(fields, input, expected, allowed) {
+    var unexpected = [];
+    expected = (expected || []).slice();
+    allowed = (allowed || []).slice();
+
+    try {
+        input.forEach(function(f) {
+            if (!f) {
+                return;
+            }
+
+            f = PTN_FIELD.exec(f);
+            if (!f) {
+                throw new Error("invalid field");
+            }
+
+            var pos;
+            pos = expected.indexOf(f[1]);
+            if (pos !== -1) {
+                expected.splice(pos, 1);
+            }
+            pos = allowed.indexOf(f[1]);
+            if (pos !== -1) {
+                allowed.splice(pos, 1);
+            }
+            switch (f[1]) {
+                case "a":   // authorization id
+                    fields["authzid"] = f[2];
+                    break;
+                case "c":   // channel binding
+                    fields["binding"] = f[2];
+                    break;
+                case "n":   // username
+                    fields["username"] = f[2];
+                    break;
+                case "r":   // nonce
+                    fields["nonce"] = f[2];
+                    break;
+                default:
+                    unexpected.push(f[1]);
+                    break;
+            }
+
+        });
+    } catch (ex) {
+        return q.reject(ex);
+    }
+
+    if          (unexpected.length) {
+        var err = new Error("unexpected fields");
+        err.fields = unexpected;
+        return q.reject(err);
+    } else if   (expected.length) {
+        var err = new Error("missing fields");
+        err.fields = expected;
+        return q.reject(err);
+    } else {
+        return q.resolve(fields);
+    }
+};
+
 exports.server = {
     name:"SCRAM-SHA1",
     stepStart: function(config, input) {
-        input = input.toString("binary");
+        // deconstruct input
+        input = input.toString("binary").
+                      split(",");
 
-        var deferred = new promised_io.Deferred();
-        promised_io.seq([
-            function() { return helpers.promisedValue(config, "username"); },
-            function(usr) {
-                return promised_io.all(
-                    promised_io.whenPromise(usr),
-                    helpers.promisedValue(config, "nonce"),
-                    helpers.promisedValue(config, "iterations", usr),
-                    helpers.promisedValue(config, "salt", usr)
-                );
-            }
-        ]).then(function(factors) {
-            var info = config.authScram = {};
-            var cfgUsr = factors[0],
-                cfgNonce = factors[1],
-                cfgItrs = factors[2],
-                cfgSalt = factors[3];
+        // input[0] == binding request
+        if (input[0] !== "n") {
+            return q.reject(new Error("channel binding not supported"));
+        }
 
-            // deconstruct input
-            input = input.split(",");
+        var fields = config.authScram = {};
+        return __parseClientFields(fields, input, ["n", "r"], ["a"]).
+               then(function(fields) {
 
-            // input[0] == binding request
-            if (input[0] !== "n") {
-                deferred.reject(new Error("channel binding not supported"));
-                return;
-            }
+               }).then(helpers.promisedValue(config, "username")).
+               then(function(cfgUsr) {
+                    q.all([
+                        q.resolve(cfgUsr),
+                        helpers.promisedValue(config, "nonce"),
+                        helpers.promisedValue(config, "iterations", usr),
+                        helpers.promisedValue(config, "salt", usr)
+                    ]);
+               }).then(function(factors) {
+                    var usr = factors[0],
+                        nonce = factors[1],
+                        itrs = factors[2],
+                        salt = factors[3];
 
-            input = input.slice(1);
-            input.forEach(function(f, i) {
-                f = PTN_FIELD.exec(f);
-                if (!f) {
-                    return;
-                }
+                    if (usr && usr !== fields.username) {
+                        return q.reject(new Error("invalid username"));
+                    }
 
-                switch(f[1]) {
-                    case "n":
-                        info.username = f[2];
-                        break;
-                    case "r":
-                        info.nonce = f[2];
-                        break;
-                    case "a":
-                        info.authzid = f[2];
-                        break;
-                }
-            });
+                    // remember messages
+                    fields.messages = [];
+                    // recalculate client-first-message-bare
+                    fields.messages.push([
+                        "n=" + fields.username,
+                        "r=" + fields.nonce
+                    ].join(","));
 
-            // validate username
-            if (cfgUsr && cfgUsr !== info.username) {
-                deferred.reject(new Error("invalid username"));
-                return;
-            }
+                    // calculate nonce/salt/iterations
+                    if (!nonce) {
+                        nonce = crypto.randomBytes(24).
+                                       toString("base64");
+                    }
+                    fields.nonce = fields.nonce + nonce;
 
-            // remember messages
-            info.messages = [];
-            // recalculate client-first-message-bare
-            info.messages.push([
-                "n=" + info.username,
-                "r=" + info.nonce
-            ].join(","));
+                    if (!salt) {
+                        salt = crypto.randomBytes(16).
+                                      toString("binary");
+                    }
+                    fields.salt = salt;
 
-            // calculate nonce/salt/iterations
-            if (!cfgNonce) {
-                cfgNonce = crypto.randomBytes(24).
-                                  toString("base64");
-            }
-            info.nonce = info.nonce + cfgNonce;
+                    if (!itrs) {
+                        itrs = 4096;
+                    }
+                    fields.iterations = itrs;
 
-            if (!cfgSalt) {
-                cfgSalt = crypto.randomBytes(16).
-                                 toString("binary");
-            }
-            info.salt = cfgSalt;
+                    // pre-calculate binding
+                    fields.binding = [
+                        "n",
+                        fields.authzid ? "a=" + fields.authzid : "",
+                        ""
+                    ].join(",");
+                    fields.binding = new Buffer(fields.binding, "binary").
+                                     toString("base64");
 
-            if (!cfgItrs) {
-                cfgItrs = 4096;
-            }
-            info.iterations = cfgItrs;
+                    // generate & remember server-first-message
+                    var data = [
+                        "r=" + fields.nonce,
+                        "s=" + new Buffer(fields.salt, "binary").toString("base64"),
+                        "i=" + fields.iterations
+                    ].join(",");
 
-            // pre-calculate binding
-            info.binding = [
-                "n",
-                info.authzid ? "a=" + info.authzid : "",
-                ""
-            ].join(",");
-            info.binding = new Buffer(info.binding, "binary").
-                           toString("base64");
+                    // remember server-first-message
+                    fields.messages.push(data);
 
-            var data = [
-                "r=" + info.nonce,
-                "s=" + new Buffer(info.salt, "binary").toString("base64"),
-                "i=" + info.iterations
-            ].join(",");
-
-            // remember server-first-message
-            info.messages.push(data);
-
-            deferred.resolve({
-                state:"auth",
-                data:data
-            });
-        }, function(err) {
-            deferred.reject(err);
-        });
-
-        return deferred.promise;
+                    return q.resolve({
+                        state:"auth",
+                        data:data
+                    });
+               });
     },
     stepAuth: function(config, input) {
-        var info = config.authScram;
-        input = input.toString("binary");
+        var fields = config.authScram;
+        input = input.toString("binary").
+                split(",");
 
-        promised_io.all(
-            helpers.promisedValue(config, "password", info.username),
-            helpers.promisedValue(config, "authzid", info.username)
-        ).then(function(factors) {
-            var cfgPwd = factors[0],
-                cfgAuthzid = factors[1],
-                cfgBinding = info.binding,
-                cfgNonce = info.nonce;
-            var usrProof;
+        var binding = fields.binding,
+            nonce = fields.nonce;
 
-            // remove pre-conceived notions
-            delete info.binding;
-            delete info.nonce;
+        // remove pre-conceived notions
+        delete fields.binding;
+        delete fields.nonce;
 
-            // deconstruct input
-            input = input.toString("binary").
-                          split(",");
-            input.forEach(function(f) {
-                f = PTN_FIELD.exec(f);
+        return __parseClientFields(fields, input, ["c", "r", "p"]).
+               then(function(fields) {
+                    return q.all([
+                        helpers.promisedValue(config, "password", fields.username),
+                        helpers.promisedValue(config, "authzid", fields.username)
+                    ]);
+               }).then(function(factors) {
+                    var pwd = factors[0],
+                        authzid = factors[1],
+                        binding = fields.binding,
+                        nonce = fields.nonce;
+                    var usrProof;
 
-                switch(f[1]) {
-                    case "c":
-                        info.binding = f[2];
-                        break;
-                    case "r":
-                        info.nonce = f[2];
-                        break;
-                    case "p":
-                        usrProof = f[2];
-                        break;
-                }
-            });
+                    // validate binding/nonce
+                    if (fields.binding !== binding) {
+                        return q.reject(new Error("invalid binding"));
+                    }
+                    if (fields.nonce !== nonce) {
+                        return q.reject(new Error("invalid nonce"));
+                    }
 
-            // validate binding/nonce
-            if (info.binding !== cfgBinding) {
-                deferred.reject(new Error("invalid binding"));
-                return;
-            }
-            if (info.nonce !== cfgNonce) {
-                deferred.reject(new Error("invalid nonce"));
-                return;
-            }
+                    // recalculate client-final-message-without-proof
+                    fields.messages.push([
+                        "c=" + fields.binding,
+                        "r=" + fields.nonce
+                    ].join(","));
 
-            // recalculate client-final-message-without-proof
-            info.messages.push([
-                "c=" + info.binding,
-                "r=" + info.nonce
-            ].join(","));
+                    // calculate proof
+                    var key,
+                        sig,
+                        proof;
+                    pwd = calcSaltedPwd(pwd,
+                                        fields.salt,
+                                        fields.iterations);
+                    key = calcClientKey(pwd);
+                    sig = calcClientSig(key, fields.messages.join(","));
+                    proof = calcClientProof(key, sig);
+                    if (proof !== usrProof) {
+                        return q.reject(new Error("not authorized"));
+                    }
 
-            // calculate proof
-            var pwd, key, sig, proof;
-            pwd = calcSaltedPwd(cfgPwd,
-                                info.salt,
-                                info.iterations);
-            key = calcClientKey(pwd);
-            sig = calcClientSig(key, info.messages.join(","));
-            proof = calcClientProof(key, sig);
-            if (proof !== usrProof) {
-                deferred.reject(new Error("not authorized"));
-                return;
-            }
+                    // validate authzid
+                    if (    authzid &&
+                            fields.authzid &&
+                            authzid !== fields.authzid) {
+                        return q.reject(new Error("not authorized"));
+                        return;
+                    }
 
-            // validate authzid
-            if (    cfgAuthzid &&
-                    info.authzid &&
-                    cfgAuthzid !== info.authzid) {
-                deferred.reject(new Error("not authorized"));
-                return;
-            }
+                    // calculate ServerSignature
+                    key = calcServerKey(pwd);
+                    sig = calcServerSig(key, fields.messages.join(","));
 
-            // calculate ServerSignature
-            key = calcServerKey(pwd);
-            sig = calcServerSig(key, info.messages.join(","));
-
-            var data = "v=" + new Buffer(sig, "binary").toString("base64");
-            deferred.resolve({
-                state:"complete",
-                data:data,
-                username:info.username,
-                authzid:cfgAuthzid || info.authzid || info.username
-            });
-        }, function(err) {
-            deferred.reject(err);
-        });
-
-        return deferred.promise;
+                    var data = "v=" + new Buffer(sig, "binary").
+                               toString("base64");
+                    return q.resolve({
+                        state:"complete",
+                        data:data,
+                        username:fields.username,
+                        authzid:authzid || fields.authzid || fields.username
+                    });
+               });
     }
 };

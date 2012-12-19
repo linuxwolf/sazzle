@@ -17,7 +17,8 @@ exports.server = new factory.SASLServerFactory();
 
 // setup factory defaults
 var mechs = [
-    require("./plain.js")
+    require("./plain.js"),
+    require("./scram-sha1.js")
 ];
 
 mechs.forEach(function(m) {

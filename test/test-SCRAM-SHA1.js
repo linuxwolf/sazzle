@@ -2,7 +2,8 @@
  * test/test-SCRAM-SHA1.js - SCRAM-SHA1 Mechanism Tests
  */
 
-var promised_io = require("promised-io"),
+var q = require("q"),
+    tutils = require("./utils.js"),
     helpers = require("../lib/helpers.js"),
     SCRAM = require("../scram-sha1.js");
 
@@ -16,7 +17,6 @@ module.exports = {
                 nonce:"clientnonce"
             };
             var mech = SCRAM.client;
-            var failed = false;
 
             var promise = mech.stepStart(config);
             test.ok(promise);
@@ -25,42 +25,32 @@ module.exports = {
                 test.equal(out.state, "auth");
                 test.equal(out.data.toString("binary"),
                            "n,,n=bilbo.baggins,r=clientnonce");
-            }, function(err) {
-                test.fail(err && err.message);
-                failed = true;
-            });
-            if (failed) { test.done(); return; }
 
-            var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
-            promise = mech.stepAuth(config, new Buffer(input, "binary"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.ok(typeof(promise.then) === "function");
+
+                return promise;
+            }).then(function(out) {
                 test.equal(out.state, "verify");
                 test.equal(out.data.toString("binary"),
                            "c=biws,r=clientnonceservernonce,p=CXUyegiV1Xv5HemuieIK4WVdgSg=");
-            }, function(err) {
-                test.fail(err && err.message);
-                failed = true;
-            });
-            if (failed) { test.done(); return; }
 
-            input = "v=OAYXtZgHU0CsIwEUMg9VrhnX+xg=";
-            promise = mech.stepVerify(config, new Buffer(input, "binary"));
-            test.ok(promise);
-            test.ok(typeof(promise.then) === "function");
-            promise.then(function(out) {
+                var input = "v=OAYXtZgHU0CsIwEUMg9VrhnX+xg=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.ok(typeof(promise.then) === "function");
+
+                return promise;
+            }).then(function(out) {
                 test.equal(out.state, "complete");
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
-            }, function(err) {
-                test.fail(err && err.message);
-                failed = true;
-            });
-
-            test.done();
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
         }
     }
 }
 
-require("./utils.js").run(module);
+tutils.run(module);
