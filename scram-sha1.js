@@ -6,6 +6,7 @@ var crypto = require("crypto"),
     q = require("q"),
     helpers = require("./lib/helpers.js");
 
+// helpers
 var _XOR = function(s1, s2, encoding) {
     var len = Math.max(s1.length, s2.length),
         out = new Buffer(len);
@@ -15,7 +16,6 @@ var _XOR = function(s1, s2, encoding) {
 
     return out.toString(encoding || "binary");
 }
-
 var calcSaltedPwd = function(pwd, salt, itrs) {
     var U;
 
@@ -33,7 +33,6 @@ var calcSaltedPwd = function(pwd, salt, itrs) {
 
     return U;
 }
-
 var calcClientKey = function(spwd) {
     return crypto.createHmac("sha1", spwd).
                   update("Client Key").
@@ -52,7 +51,6 @@ var calcClientSig = function(key, msg) {
 var calcClientProof = function(key, sig) {
     return _XOR(key, sig, "base64");
 }
-
 var calcServerKey = function(spwd) {
     return crypto.createHmac("sha1", spwd).
                   update("Server Key").
@@ -64,6 +62,7 @@ var calcServerSig = function(key, msg) {
                   digest("binary");
 }
 
+// fields parsing
 var PTN_FIELD = /^([^\=]+)\=(.+)$/;
 
 var __parseServerFields = function(fields, input, expected, allowed) {
@@ -124,6 +123,82 @@ var __parseServerFields = function(fields, input, expected, allowed) {
         return q.resolve(fields);
     }
 };
+var __parseClientFields = function(fields, input, expected, allowed) {
+    var unexpected = [];
+    expected = (expected || []).slice();
+    allowed = (allowed || []).slice();
+
+    try {
+        input.forEach(function(f) {
+            if (!f) {
+                return;
+            }
+
+            f = PTN_FIELD.exec(f);
+            if (!f) {
+                throw new Error("invalid field");
+            }
+
+            var pos;
+            pos = expected.indexOf(f[1]);
+            if (pos !== -1) {
+                expected.splice(pos, 1);
+            }
+            pos = allowed.indexOf(f[1]);
+            if (pos !== -1) {
+                allowed.splice(pos, 1);
+            }
+            switch (f[1]) {
+                case "a":   // authorization id
+                    fields["authzid"] = f[2];
+                    break;
+                case "c":   // channel binding
+                    fields["binding"] = f[2];
+                    break;
+                case "n":   // username
+                    fields["username"] = f[2];
+                    break;
+                case "p":   // (client) proof
+                    fields["proof"] = f[2];
+                    break;
+                case "r":   // nonce
+                    fields["nonce"] = f[2];
+                    break;
+                default:
+                    unexpected.push(f[1]);
+                    break;
+            }
+
+        });
+    } catch (ex) {
+        return q.reject(ex);
+    }
+
+    if          (unexpected.length) {
+        var err = new Error("unexpected fields");
+        err.fields = unexpected;
+        return q.reject(err);
+    } else if   (expected.length) {
+        var err = new Error("missing fields");
+        err.fields = expected;
+        return q.reject(err);
+    } else {
+        return q.resolve(fields);
+    }
+};
+
+/**
+ * client config properties:
+ * - username : string || function(config) { return string || promise }
+ *   + if missing, CONTINUE
+ * - nonce : string || function(config, username) { return string || promise }
+ *   + if missing, generate random then CONTINUE
+ * - authzid : string || function(config, username) { return string || promise }
+ *   + if missing, CONTINUE
+ * - password : string || function(config, username) { return string || promise }
+ *   + if missing, CONTINUE
+ */
+
 exports.client = {
     name: "SCRAM-SHA1",
     stepStart: function(config) {
@@ -254,67 +329,28 @@ exports.client = {
     }
 };
 
-var __parseClientFields = function(fields, input, expected, allowed) {
-    var unexpected = [];
-    expected = (expected || []).slice();
-    allowed = (allowed || []).slice();
-
-    try {
-        input.forEach(function(f) {
-            if (!f) {
-                return;
-            }
-
-            f = PTN_FIELD.exec(f);
-            if (!f) {
-                throw new Error("invalid field");
-            }
-
-            var pos;
-            pos = expected.indexOf(f[1]);
-            if (pos !== -1) {
-                expected.splice(pos, 1);
-            }
-            pos = allowed.indexOf(f[1]);
-            if (pos !== -1) {
-                allowed.splice(pos, 1);
-            }
-            switch (f[1]) {
-                case "a":   // authorization id
-                    fields["authzid"] = f[2];
-                    break;
-                case "c":   // channel binding
-                    fields["binding"] = f[2];
-                    break;
-                case "n":   // username
-                    fields["username"] = f[2];
-                    break;
-                case "r":   // nonce
-                    fields["nonce"] = f[2];
-                    break;
-                default:
-                    unexpected.push(f[1]);
-                    break;
-            }
-
-        });
-    } catch (ex) {
-        return q.reject(ex);
-    }
-
-    if          (unexpected.length) {
-        var err = new Error("unexpected fields");
-        err.fields = unexpected;
-        return q.reject(err);
-    } else if   (expected.length) {
-        var err = new Error("missing fields");
-        err.fields = expected;
-        return q.reject(err);
-    } else {
-        return q.resolve(fields);
-    }
-};
-
+/**
+ * server config properties:
+ * - username : string || function(config) { return string || promise }
+ *   + if missing, CONTINUE
+ *   + if present, input value MUST match (or FAIL)
+ * - nonce : string || function(config, username) { return string || promise }
+ *   + if missing, generate random then CONTINUE
+ * - iterations : integer || function(config, username) { return integer || promise }
+ *   + if missing, default to 4096 then CONTINUE
+ * - salt : string || function(config, username) { return string || promise }
+ *   + if missing, generate random then CONTINUE
+ *   !! NOTE: string is expected to be binary, NOT base64
+ * - password : string || function(config, username) { return string || promise }
+ *   + if missing, input value MUST be "" (or FAIL)
+ *   + if present, input value MUST match (or FAIL)
+ * - authorize : function(config, username, authzid) { return boolean || promise }
+ *   + if missing, then
+ *      + if authzid missing, SUCCEED
+ *      + if authzid matches username, SUCCEED
+ *      + else FAIL
+ *   + if present; true == SUCCEED, false == FAIL
+ */
 exports.server = {
     name:"SCRAM-SHA1",
     stepStart: function(config, input) {
@@ -326,79 +362,80 @@ exports.server = {
         if (input[0] !== "n") {
             return q.reject(new Error("channel binding not supported"));
         }
+        input.splice(0, 1);
 
         var fields = config.authScram = {};
-        return __parseClientFields(fields, input, ["n", "r"], ["a"]).
-               then(function(fields) {
+        return q.all([
+            __parseClientFields(fields, input, ["n", "r"], ["a"]),
+            helpers.promisedValue(config, "username")
+        ]).then(function(factors) {
+            var cfgUsr = factors[1];
+            return q.all([
+                q.resolve(cfgUsr),
+                helpers.promisedValue(config, "nonce"),
+                helpers.promisedValue(config, "iterations", cfgUsr),
+                helpers.promisedValue(config, "salt", cfgUsr)
+            ]);
+       }).then(function(factors) {
+            var usr = factors[0],
+                nonce = factors[1],
+                itrs = factors[2],
+                salt = factors[3];
 
-               }).then(helpers.promisedValue(config, "username")).
-               then(function(cfgUsr) {
-                    q.all([
-                        q.resolve(cfgUsr),
-                        helpers.promisedValue(config, "nonce"),
-                        helpers.promisedValue(config, "iterations", usr),
-                        helpers.promisedValue(config, "salt", usr)
-                    ]);
-               }).then(function(factors) {
-                    var usr = factors[0],
-                        nonce = factors[1],
-                        itrs = factors[2],
-                        salt = factors[3];
+            if (usr && usr !== fields.username) {
+                return q.reject(new Error("invalid username"));
+            }
 
-                    if (usr && usr !== fields.username) {
-                        return q.reject(new Error("invalid username"));
-                    }
+            // remember messages
+            fields.messages = [];
+            // recalculate client-first-message-bare
+            fields.messages.push([
+                "n=" + fields.username,
+                "r=" + fields.nonce
+            ].join(","));
 
-                    // remember messages
-                    fields.messages = [];
-                    // recalculate client-first-message-bare
-                    fields.messages.push([
-                        "n=" + fields.username,
-                        "r=" + fields.nonce
-                    ].join(","));
+            // calculate nonce/salt/iterations
+            if (!nonce) {
+                nonce = crypto.randomBytes(24).
+                               toString("base64");
+            }
+            fields.nonce = fields.nonce + nonce;
 
-                    // calculate nonce/salt/iterations
-                    if (!nonce) {
-                        nonce = crypto.randomBytes(24).
-                                       toString("base64");
-                    }
-                    fields.nonce = fields.nonce + nonce;
+            if (!salt) {
+                salt = crypto.randomBytes(16).
+                              toString("binary");
+            }
+            fields.salt = salt;
 
-                    if (!salt) {
-                        salt = crypto.randomBytes(16).
-                                      toString("binary");
-                    }
-                    fields.salt = salt;
+            if (!itrs) {
+                itrs = 4096;
+            }
+            fields.iterations = itrs;
 
-                    if (!itrs) {
-                        itrs = 4096;
-                    }
-                    fields.iterations = itrs;
+            // pre-calculate binding
+            fields.binding = [
+                "n",
+                fields.authzid ? "a=" + fields.authzid : "",
+                ""
+            ].join(",");
+            fields.binding = new Buffer(fields.binding, "binary").
+                             toString("base64");
 
-                    // pre-calculate binding
-                    fields.binding = [
-                        "n",
-                        fields.authzid ? "a=" + fields.authzid : "",
-                        ""
-                    ].join(",");
-                    fields.binding = new Buffer(fields.binding, "binary").
-                                     toString("base64");
+            // generate & remember server-first-message
+            var data = [
+                "r=" + fields.nonce,
+                "s=" + new Buffer(fields.salt, "binary").toString("base64"),
+                "i=" + fields.iterations
+            ].join(",");
 
-                    // generate & remember server-first-message
-                    var data = [
-                        "r=" + fields.nonce,
-                        "s=" + new Buffer(fields.salt, "binary").toString("base64"),
-                        "i=" + fields.iterations
-                    ].join(",");
+            // remember server-first-message
+            fields.messages.push(data);
 
-                    // remember server-first-message
-                    fields.messages.push(data);
-
-                    return q.resolve({
-                        state:"auth",
-                        data:data
-                    });
-               });
+            return q.resolve({
+                state:"auth",
+                data:data
+            });
+       });
     },
     stepAuth: function(config, input) {
         var fields = config.authScram;
@@ -420,7 +457,7 @@ exports.server = {
                 pwd = factors[1],
                 binding = fields.binding,
                 nonce = fields.nonce;
-            var usrProof;
+            var usrProof = fields.proof;
 
             // validate binding/nonce
             if (fields.binding !== binding) {
@@ -450,14 +487,6 @@ exports.server = {
                 return q.reject(new Error("not authorized"));
             }
 
-            // validate authzid
-            if (    authzid &&
-                    fields.authzid &&
-                    authzid !== fields.authzid) {
-                return q.reject(new Error("not authorized"));
-                return;
-            }
-
             // calculate ServerSignature
             key = calcServerKey(pwd);
             sig = calcServerSig(key, fields.messages.join(","));
@@ -465,9 +494,9 @@ exports.server = {
 
             var authz = config.authorize;
             if          (typeof(authz) === "function") {
-                authz = authz(config, usr, authzid);
+                authz = authz(config, usr, fields.authzid);
             } else if   (authz == null) {
-                authz = !authzid || (usr === authzid);
+                authz = !fields.authzid || (usr === fields.authzid);
             }
 
             return q.resolve(authz);
