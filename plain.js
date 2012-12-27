@@ -8,12 +8,11 @@ var q = require("q"),
  * client config properties:
  * - username : string || function(config) { return string || promise }
  *   + if missing, CONTINUE
- * - password : string || function(config, username) { return string || promise }
- *   + if missing, CONTINUE
  * - authzid : string || function(config, username) { return string || promise }
  *   + if missing, CONTINUE
+ * - password : string || function(config, username) { return string || promise }
+ *   + if missing, CONTINUE
  */
-
 exports.client = {
     name: "PLAIN",
     stepStart: function(config) {
@@ -66,7 +65,6 @@ exports.client = {
  *      + else FAIL
  *   + if present; true == SUCCEED, false == FAIL
  */
-
 var __doAuthorize = function(config, username, authzid) {
     if (!authzid || (username === authzid)) {
         return q.resolve(authzid || username);
