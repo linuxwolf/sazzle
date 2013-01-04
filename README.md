@@ -1,3 +1,3 @@
-# Node-SASL #
+# *SAZZLE* - The SASL library with PIZZAZZ! #
 
-Pure JavaScript framework for the Simple Authentication and Security Layer (SASL).
+SAZZLE is a pure JavaScript framework for the Simple Authentication and Security Layer (SASL).

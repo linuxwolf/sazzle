@@ -1,5 +1,6 @@
 {
-    "name" : "sasl",
+    "name" : "sazzle",
+    "description" : "The SASL library with PIZZAZZ!",
     "version" : "0.0.2",
     "main" : "./index.js",
     "dependencies" : {
