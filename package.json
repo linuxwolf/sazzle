@@ -1,6 +1,6 @@
 {
     "name" : "sasl",
-    "version" : "0.0.0",
+    "version" : "0.0.2",
     "main" : "./index.js",
     "dependencies" : {
         "q": "~0.8"
