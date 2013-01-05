@@ -8,7 +8,7 @@ This library includes built-in support for [PLAIN](https://tools.ietf.org/html/r
 
 From sources:
 
-    npm install https://github.com/linuxwolf/sazzle.git
+    npm install git+https://github.com/linuxwolf/sazzle.git
 
 ## Usage ##
 
