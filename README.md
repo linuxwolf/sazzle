@@ -4,7 +4,7 @@
 
 This library includes built-in support for [PLAIN](https://tools.ietf.org/html/rfc4616) and [SCRAM-SHA1](http://tools.ietf.org/html/rfc5802), while additional (or alternative) mechanisms can be added as needed.
 
-This software is liecensed under the terms of the [MIT License](./LICENSE).
+This software is liecensed under the terms of the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Installation ##
 
