@@ -1,6 +1,6 @@
+
+
 /*!
- * test/index.js - Full Test Suite
- *
  * Copyright (c) 2013 Matthew A. Miller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -21,10 +21,3 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-
-module.exports = {
-    "session" : require("./test-session.js"),
-    "factory" : require("./test-factory.js"),
-    "PLAIN mechanism" : require("./test-PLAIN.js"),
-    "SCRAM-SHA1 mechanism" : require("./test-SCRAM-SHA1.js")
-}
