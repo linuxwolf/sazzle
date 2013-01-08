@@ -37,21 +37,20 @@ var _XOR = function(s1, s2, encoding) {
     return out.toString(encoding || "binary");
 }
 var calcSaltedPwd = function(pwd, salt, itrs) {
-    var U;
+    var U,
+        hash = "";
 
     // calculate U1
     U = salt + "\u0000\u0000\u0000\u0001";
-    U = crypto.createHmac("sha1", pwd).
-               update(U).
-               digest("binary");
 
-    for (var idx = 1; idx < itrs; idx++) {
-        U = _XOR(U, crypto.createHmac("sha1", pwd).
-                           update(U).
-                           digest("binary"));
+    for (var idx = 0; idx < itrs; idx++) {
+        U = crypto.createHmac("sha1", pwd).
+                   update(U).
+                   digest("binary");
+        hash = _XOR(hash, U);
     }
 
-    return U;
+    return hash;
 }
 var calcClientKey = function(spwd) {
     return crypto.createHmac("sha1", spwd).

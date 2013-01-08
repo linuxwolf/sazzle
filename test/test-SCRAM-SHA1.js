@@ -55,9 +55,9 @@ module.exports = {
             }).then(function(out) {
                 test.equal(out.state, "verify");
                 test.equal(out.data.toString("binary"),
-                           "c=biws,r=clientnonceservernonce,p=CXUyegiV1Xv5HemuieIK4WVdgSg=");
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
 
-                var input = "v=OAYXtZgHU0CsIwEUMg9VrhnX+xg=";
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
                 promise = mech.stepVerify(config, new Buffer(input, "binary"));
                 test.ok(promise);
                 test.equal(typeof(promise.then), "function");
@@ -90,7 +90,7 @@ module.exports = {
                 test.equal(out.data.toString("binary"),
                            "r=clientnonceservernonce,s=c2FsdA==,i=1024");
 
-                var input = "c=biws,r=clientnonceservernonce,p=CXUyegiV1Xv5HemuieIK4WVdgSg=";
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
                 promise = mech.stepAuth(config, new Buffer(input, "binary"));
                 test.ok(promise);
                 test.equal(typeof(promise.then), "function");
@@ -99,7 +99,7 @@ module.exports = {
             }).then(function(out) {
                 test.equal(out.state, "complete");
                 test.equal(out.data.toString("binary"),
-                           "v=OAYXtZgHU0CsIwEUMg9VrhnX+xg=");
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
                 test.equal(out.username, "bilbo.baggins");
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
