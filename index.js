@@ -22,8 +22,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-var session = require("./lib/session.js"),
+var helpers = require("./lib/helpers.js"),
+    session = require("./lib/session.js"),
     factory = require("./lib/factory.js");
+
+// expose some helpers
+exports.PBKDF2 = helpers.PBKDF2;
 
 // setup client factory
 exports.SASLClientFactory = factory.SASLClientFactory;
