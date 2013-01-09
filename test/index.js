@@ -23,6 +23,7 @@
  */
 
 module.exports = {
+    "helpers" : require("./test-helpers.js"),
     "session" : require("./test-session.js"),
     "factory" : require("./test-factory.js"),
     "PLAIN mechanism" : require("./test-PLAIN.js"),
