@@ -27,31 +27,6 @@ var crypto = require("crypto"),
     helpers = require("./lib/helpers.js");
 
 // helpers
-var _XOR = function(s1, s2, encoding) {
-    var len = Math.max(s1.length, s2.length),
-        out = new Buffer(len);
-    for (var idx = 0; idx < len; idx++) {
-        out[idx] = s1.charCodeAt(idx) ^ s2.charCodeAt(idx);
-    }
-
-    return out.toString(encoding || "binary");
-}
-var calcSaltedPwd = function(pwd, salt, itrs) {
-    var U,
-        hash = "";
-
-    // calculate U1
-    U = salt + "\u0000\u0000\u0000\u0001";
-
-    for (var idx = 0; idx < itrs; idx++) {
-        U = crypto.createHmac("sha1", pwd).
-                   update(U).
-                   digest("binary");
-        hash = _XOR(hash, U);
-    }
-
-    return hash;
-}
 var calcClientKey = function(spwd) {
     return crypto.createHmac("sha1", spwd).
                   update("Client Key").
@@ -68,7 +43,7 @@ var calcClientSig = function(key, msg) {
                   digest("binary");
 }
 var calcClientProof = function(key, sig) {
-    return _XOR(key, sig, "base64");
+    return helpers.XOR(key, sig).toString("base64");
 }
 var calcServerKey = function(spwd) {
     return crypto.createHmac("sha1", spwd).
@@ -263,6 +238,7 @@ exports.client = {
         input = input.toString("binary").
                 split(",");
 
+        var message = [];
         var fields = config.authScram;
         var nonce = fields.nonce;
         delete fields.nonce;
@@ -292,22 +268,27 @@ exports.client = {
             }
 
             // (start to) construct client-final-message
-            var message = [
-                "c=" + fields.binding,
-                "r=" + fields.nonce
-            ];
+            message.push("c=" + fields.binding);
+            message.push("r=" + fields.nonce);
+
             // store client-final-message-without-proof
             fields.messages.push(message.join(","));
 
-            // calculate SaltedPassword, ClientKey, ClientSig, ClientProof
+            // calculate SaltedPassword
+            return helpers.PBKDF2("sha1",
+                                  pwd,
+                                  fields.salt,
+                                  fields.iterations,
+                                  20);
+        }).then(function(spwd) {
+            // calculate ClientKey, ClientSig, ClientProof
             var key, proof, sig;
-            pwd = calcSaltedPwd(pwd, fields.salt, fields.iterations);
-            key = calcClientKey(pwd);
+            key = calcClientKey(spwd);
             sig = calcClientSig(key, fields.messages.join(","));
             proof = calcClientProof(key, sig);
 
             // store SaltedPassword for verify
-            fields.password = pwd;
+            fields.password = spwd;
 
             message.push("p=" + proof);
             return q.resolve({
@@ -323,11 +304,6 @@ exports.client = {
         var fields = config.authScram;
         return __parseServerFields(fields, input, ["v"]).
                then(function(fields) {
-                    // validate non-empty verification
-                    if (!fields.verification) {
-                        return q.reject(new Error("missing verification"));
-                    }
-
                     // Calculate ServerKey, ServerSignature
                     var key, sig;
                     key = calcServerKey(fields.password);
@@ -343,8 +319,6 @@ exports.client = {
                         });
                     }
                });
-
-        return deferred.promise;
     }
 };
 
@@ -476,7 +450,6 @@ exports.server = {
                 pwd = factors[1],
                 binding = fields.binding,
                 nonce = fields.nonce;
-            var usrProof = fields.proof;
 
             // validate binding/nonce
             if (fields.binding !== binding) {
@@ -492,22 +465,26 @@ exports.server = {
                 "r=" + fields.nonce
             ].join(","));
 
+            // calculate SaltedPassword
+            return helpers.PBKDF2("sha1",
+                                  pwd,
+                                  fields.salt,
+                                  fields.iterations,
+                                  20);
+        }).then(function(spwd) {
             // calculate proof
             var key,
                 sig,
                 proof;
-            pwd = calcSaltedPwd(pwd,
-                                fields.salt,
-                                fields.iterations);
-            key = calcClientKey(pwd);
+            key = calcClientKey(spwd);
             sig = calcClientSig(key, fields.messages.join(","));
             proof = calcClientProof(key, sig);
-            if (proof !== usrProof) {
+            if (proof !== fields.proof) {
                 return q.reject(new Error("not authorized"));
             }
 
             // calculate ServerSignature
-            key = calcServerKey(pwd);
+            key = calcServerKey(spwd);
             sig = calcServerSig(key, fields.messages.join(","));
             fields.verification = sig;
 
