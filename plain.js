@@ -76,8 +76,16 @@ exports.client = {
  *   + if missing, CONTINUE
  *   + if present, input value MUST match (or FAIL)
  * - password : string || function(config, username) { return string || promise }
- *   + if missing, input value MUST be "" (or FAIL)
- *   + if present, input value MUST match (or FAIL)
+ *   + if missing, password == "" and CONTINUE (see below)
+ * - prf : string || function(config, username) { return string || promise }
+ *   + if missing, prf == "sha1" and CONTINUE
+ * - salt : string || function(config, username)
+ *   + if missing, salt == predetermined value and CONTINUE
+ * - iterations : number || function(config, username) { return number || promise }
+ *   + if missing, iterations == 4096 and CONTINUE
+ * - derivedKey : string || function(confing, username) { return string || promise }
+ *   + if missing, derivedKey == PBKDF2(prf, password, salt, iterations, len(prf))
+ *   + compared against client-supplied password by computing derivedKey
  * - authorize : function(config, username, authzid) { return boolean || promise }
  *   + if missing, then
  *      + if authzid missing, SUCCEED
@@ -106,20 +114,46 @@ exports.server = {
         var authzid = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
+        var fields = {};
 
         return helpers.promisedValue(config, "username").
                 then(function(cfgUsr) {
-                    cfgUsr = cfgUsr || usr;
+                    fields.username = cfgUsr || usr;
                     return q.all([
-                        q.resolve(cfgUsr),
                         helpers.promisedValue(config, "password", cfgUsr),
+                        helpers.promisedValue(config, "prf", cfgUsr),
+                        helpers.promisedValue(config, "salt", cfgUsr),
+                        helpers.promisedValue(config, "iterations", cfgUsr)
                     ]);
                 }).then(function(factors) {
-                    if (    (factors[0] !== usr) ||
-                            (factors[1] !== pwd)) {
-                        return q.reject(new Error("not authorized"));
+                    var cfgPwd = factors[0];
+
+                    fields.prf = factors[1] || helpers.DEFAULT_PRF;
+                    fields.salt = factors[2] || helpers.DEFAULT_SALT;
+                    fields.iterations = factors[3] || helpers.DEFAULT_ITERATIONS;
+
+                    if (!config.derivedKey) {
+                        return q.resolve([pwd, cfgPwd]);
                     }
 
+                    return q.all([
+                        helpers.PBKDF2(fields.prf,
+                                       pwd,
+                                       fields.salt,
+                                       fields.iterations),
+                        helpers.promisedValue(config,
+                                              "derivedKey",
+                                              username,
+                                              fields.prf,
+                                              fields.salt,
+                                              fields.iterations)
+                    ]);
+                }).then(function(crypted) {
+                    if (    (fields.username !== usr) ||
+                            crypted[0] !== crypted[1]) {
+                        return q.reject(new Error("not authorized"));
+                    }
+                    
                     var authz = config.authorize;
                     if          (typeof(authz) === "function") {
                         authz = authz(config, usr, authzid);
