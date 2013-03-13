@@ -22,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 var q = require("q"),
-    helpers = require("./lib/helpers.js");
+    helpers = require("./lib/helpers.js"),
+    pbkdf2 = require("./pbkdf2.js").pbkdf2;
 
 /**
  * client config properties:
@@ -137,10 +138,9 @@ exports.server = {
                     }
 
                     return q.all([
-                        helpers.PBKDF2(fields.prf,
-                                       pwd,
-                                       fields.salt,
-                                       fields.iterations),
+                        pbkdf2(fields.prf)(pwd,
+                                           fields.salt,
+                                           fields.iterations),
                         helpers.promisedValue(config,
                                               "derivedKey",
                                               username,

@@ -24,7 +24,8 @@
 
 var crypto = require("crypto"),
     q = require("q"),
-    helpers = require("./lib/helpers.js");
+    helpers = require("./lib/helpers.js"),
+    pbkdf2 = require("./pbkdf2.js").pbkdf2;
 
 // helpers
 var calcClientKey = function(spwd) {
@@ -275,8 +276,7 @@ exports.client = {
             fields.messages.push(message.join(","));
 
             // calculate SaltedPassword
-            return helpers.PBKDF2("sha1",
-                                  pwd,
+            return pbkdf2("sha1")(pwd,
                                   fields.salt,
                                   fields.iterations,
                                   20);
@@ -466,8 +466,7 @@ exports.server = {
             ].join(","));
 
             // calculate SaltedPassword
-            return helpers.PBKDF2("sha1",
-                                  pwd,
+            return pbkdf2("sha1")(pwd,
                                   fields.salt,
                                   fields.iterations,
                                   20);
