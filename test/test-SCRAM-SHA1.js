@@ -104,6 +104,43 @@ module.exports = {
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (client-provided user)" : function(test) {
+            var config = {
+                state:"start",
+                password: function(cfg, usr) {
+                    test.equals(usr, "bilbo.baggins");
+                    
+                    return "! 84G3nd";
+                },
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
         }
     }
 }

@@ -918,6 +918,31 @@ module.exports = {
                 test.done();
             });
         },
+        "test success (client-provided username)": function(test) {
+            var config = {
+                state:"start",
+                password: function(cfg, usr) {
+                    test.equal(usr, "bilbo.baggins");
+                    
+                    return "! 84G3nd";
+                }
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
         "test failure (username mismatch)" : function(test) {
             var config = {
                 state:"start",
