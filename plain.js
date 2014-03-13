@@ -119,12 +119,15 @@ exports.server = {
 
         return helpers.promisedValue(config, "username").
                 then(function(cfgUsr) {
-                    fields.username = cfgUsr || usr;
+                    if (cfgUsr && usr !== cfgUsr) {
+                        return q.reject(new Error("not authorized"));
+                    }
+                    fields.username = usr;
                     return q.all([
-                        helpers.promisedValue(config, "password", cfgUsr),
-                        helpers.promisedValue(config, "prf", cfgUsr),
-                        helpers.promisedValue(config, "salt", cfgUsr),
-                        helpers.promisedValue(config, "iterations", cfgUsr)
+                        helpers.promisedValue(config, "password", usr),
+                        helpers.promisedValue(config, "prf", usr),
+                        helpers.promisedValue(config, "salt", usr),
+                        helpers.promisedValue(config, "iterations", usr)
                     ]);
                 }).then(function(factors) {
                     var cfgPwd = factors[0];
@@ -149,8 +152,7 @@ exports.server = {
                                               fields.iterations)
                     ]);
                 }).then(function(crypted) {
-                    if (    (fields.username !== usr) ||
-                            crypted[0] !== crypted[1]) {
+                    if (crypted[0] !== crypted[1]) {
                         return q.reject(new Error("not authorized"));
                     }
                     

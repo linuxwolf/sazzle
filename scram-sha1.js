@@ -362,22 +362,20 @@ exports.server = {
             __parseClientFields(fields, input, ["n", "r"], ["a"]),
             helpers.promisedValue(config, "username")
         ]).then(function(factors) {
-            var cfgUsr = factors[1];
-            return q.all([
-                q.resolve(cfgUsr),
-                helpers.promisedValue(config, "nonce"),
-                helpers.promisedValue(config, "iterations", cfgUsr),
-                helpers.promisedValue(config, "salt", cfgUsr)
-            ]);
-       }).then(function(factors) {
-            var usr = factors[0],
-                nonce = factors[1],
-                itrs = factors[2],
-                salt = factors[3];
-
-            if (usr && usr !== fields.username) {
+            var usr = fields.username,
+                cfgUsr = factors[1];
+            if (cfgUsr && usr !== cfgUsr) {
                 return q.reject(new Error("invalid username"));
             }
+            return q.all([
+                helpers.promisedValue(config, "nonce", usr),
+                helpers.promisedValue(config, "iterations", usr),
+                helpers.promisedValue(config, "salt", usr)
+            ]);
+       }).then(function(factors) {
+            var nonce = factors[0],
+                itrs = factors[1],
+                salt = factors[2];
 
             // remember messages
             fields.messages = [];
