@@ -3,8 +3,26 @@
     "description" : "The SASL library with PIZZAZZ!",
     "version" : "0.0.4",
     "main" : "./index.js",
+    "license" : "MIT",
+    "keywords": ["sasl", "auth", "scram"],
+    "homepage": "https://github.com/linuxwolf/sazzle",
+    "author": {
+        "name": "Matthew A. Miller",
+        "email": "linuxwolf@outer-planes.net"
+    },
+    "contributors": [],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/linuxwolf/sazzle.git"
+    },
+    "bugs": {
+        "url": "https://github.com/linuxwolf/sazzle/issues"
+    },
+    "engines": {
+        "npm": ">=0.10.1"
+    },
     "dependencies" : {
-        "q": "~0.8"
+        "q": "~0.9"
     },
     "devDependencies" : {
         "nodeunit" : "*"
