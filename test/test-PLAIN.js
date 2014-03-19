@@ -24,6 +24,7 @@
 var q = require("q"),
     tutils = require("./utils.js"),
     helpers = require("../lib/helpers.js"),
+    PBKDF2 = require("../pbkdf2.js"),
     PLAIN = require("../plain.js");
 
 module.exports = {
@@ -672,6 +673,44 @@ module.exports = {
                 test.equal(err.message, "authzid callback rejected");
                 test.done();
             });
+        },
+        "test failure (non-empty success)": function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd"
+            };
+            var mech = PLAIN.client;
+
+            var promise;
+            var startResolved = function(out) {
+                test.ok(out);
+                test.ok(typeof(out) === "object");
+                test.equal(out.state, "verify");
+
+                var data = out.data;
+                test.ok(data instanceof Buffer);
+                test.equal(data.toString(), "\u0000bilbo.baggins\u0000! 84G3nd");
+
+                promise = mech.stepVerify(config,
+                                          new Buffer("success"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+                promise.then(function(out) {
+                    test.fail("unexpected success");
+                    test.done();
+                }, verifyFailed);
+            };
+            var verifyFailed = function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "unexpected data");
+                test.done();
+            };
+
+            promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(startResolved, tutils.unexpectedFail(test));
         }
     },
     server: {
@@ -680,6 +719,140 @@ module.exports = {
                 state:"start",
                 username:"bilbo.baggins",
                 password:"! 84G3nd"
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (empty username)" : function(test) {
+            var config = {
+                state:"start",
+                username:"",
+                password:"! 84G3nd"
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000\u0000! 84G3nd"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "");
+                test.equal(out.authzid, "");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (empty password)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:""
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000bilbo.baggins\u0000"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (empty everything)" : function(test) {
+            var config = {
+                state:"start",
+                username:"",
+                password:""
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000\u0000"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "");
+                test.equal(out.authzid, "");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (non-plaintext compare defaults)" : function(test) {
+            var derivedKey = new Buffer("/D5YiMsQK+NdpXy819AMALqDxu8=", "base64").
+                             toString("binary");
+        
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                derivedKey:function(config, username, prf, salt, iterations) {
+                    test.equal(username, "bilbo.baggins");
+                    test.equal(prf, helpers.DEFAULT_PRF);
+                    test.equal(salt, helpers.DEFAULT_SALT);
+                    test.equal(iterations, helpers.DEFAULT_ITERATIONS);
+                    
+                    return derivedKey;
+                }
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (non-plaintext compare specifics)" : function(test) {
+            var derivedKey = new Buffer("U661kKoun6gLWu+sXb1u2ss+nRR49l4NPNQ75tBndsY=", "base64").
+                             toString("binary");
+        
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                prf:"sha256",
+                salt:new Buffer("Uqn4YwFF4lTkYRwJ/o/viLU5mYUm2TMF", "base64").
+                     toString("binary"),
+                iterations:8192,
+                derivedKey:function(config, username, prf, salt, iterations) {
+                    test.equal(username, "bilbo.baggins");
+                    test.equal(prf, config.prf);
+                    test.equal(salt, config.salt);
+                    test.equal(iterations, config.iterations);
+                    
+                    return derivedKey;
+                }
             };
             var mech = PLAIN.server;
 
@@ -933,6 +1106,36 @@ module.exports = {
                                          new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
             test.ok(promise);
             test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }, function(err) {
+                test.fail(err && err.message);
+                test.done();
+            });
+        },
+        "test success (server first)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                serverFirst:true
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer(""));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.equal(out.state, "start");
+                test.equal(out.data.toString("binary"), "");
+            });
+            
+            promise = mech.stepStart(config,
+                                     new Buffer("\u0000bilbo.baggins\u0000! 84G3nd"));
             promise.then(function(out) {
                 test.equal(out.state, "complete");
                 test.equal(out.username, "bilbo.baggins");
@@ -1210,6 +1413,27 @@ module.exports = {
             }, function(err) {
                 test.ok(err instanceof Error);
                 test.equal(err.message, "authorize callback rejected");
+                test.done();
+            });
+        },
+        "test failure (empty request)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd"
+            };
+            var mech = PLAIN.server;
+
+            var promise = mech.stepStart(config,
+                                         new Buffer(""));
+            test.ok(promise);
+            test.ok(typeof(promise.then) === "function");
+            promise.then(function(out) {
+                test.fail("unexpected success");
+                test.done();
+            }, function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "client data required");
                 test.done();
             });
         }

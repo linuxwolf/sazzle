@@ -60,7 +60,7 @@ exports.client = {
                      });
     },
     "stepVerify": function(config, input) {
-        if (input) {
+        if (input && input.length) {
             return q.reject(new Error("unexpected data"));
         }
         return q.resolve({
@@ -94,28 +94,30 @@ exports.client = {
  *      + else FAIL
  *   + if present; true == SUCCEED, false == FAIL
  */
-var __doAuthorize = function(config, username, authzid) {
-    if (!authzid || (username === authzid)) {
-        return q.resolve(authzid || username);
-    } else {
-        return q.reject(new Error("not authorized"));
-    }
-}
-
 exports.server = {
     name: "PLAIN",
     stepStart: function(config, input) {
-        if (!input) {
-            return promised_io.when(null);
+        var fields = config.authPlain = {};
+
+        input = input.toString("binary");
+        if (input.length === 0) {
+            if (!fields.serverFirst && config.serverFirst) {
+                fields.serverFirst = true;
+                return q.resolve({
+                    state:"start",
+                    data:null
+                });
+            } else {
+                return q.reject(new Error("client data required"));
+            }
         }
 
         var deferred = q.defer();
 
-        input = input.toString("binary").split("\u0000");
+        input = input.split("\u0000");
         var authzid = input[0] || "",
             usr = input[1] || "",
             pwd = input[2] || "";
-        var fields = {};
 
         return helpers.promisedValue(config, "username").
                 then(function(cfgUsr) {
@@ -146,7 +148,7 @@ exports.server = {
                                            fields.iterations),
                         helpers.promisedValue(config,
                                               "derivedKey",
-                                              username,
+                                              usr,
                                               fields.prf,
                                               fields.salt,
                                               fields.iterations)
