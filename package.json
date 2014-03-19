@@ -1,7 +1,7 @@
 {
     "name" : "sazzle",
     "description" : "The SASL library with PIZZAZZ!",
-    "version" : "0.0.5",
+    "version" : "0.0.6",
     "main" : "./index.js",
     "license" : "MIT",
     "keywords": ["sasl", "auth", "scram"],
@@ -25,9 +25,10 @@
         "q": "~0.9"
     },
     "devDependencies" : {
-        "nodeunit" : "*"
+        "nodeunit" : "*",
+        "istanbul": "*"
     },
     "scripts": {
-        "test":"./node_modules/.bin/nodeunit ./test/index.js"
+        "test":"./node_modules/.bin/istanbul test ./node_modules/.bin/nodeunit ./test/index.js"
     }
 }

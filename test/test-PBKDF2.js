@@ -85,7 +85,7 @@ module.exports = {
         test.done();
     },
     "SHA1": {
-        "test sha1/salt/password/1/20": function(test) {
+        "test sha1/password/salt/1/20": function(test) {
             var promise = pbkdf2("sha1")("password", "salt", 1, 20);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
@@ -96,7 +96,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha1/salt/password/2/20" : function(test) {
+        "test sha1/password/salt/2/20" : function(test) {
             var promise = pbkdf2("sha1")("password", "salt", 2, 20);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
@@ -107,7 +107,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha1/salt/password/4096/20" : function(test) {
+        "test sha1/password/salt/4096/20" : function(test) {
             var promise = pbkdf2("sha1")("password", "salt", 4096, 20);
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
@@ -143,10 +143,46 @@ module.exports = {
                     }).fin(function() {
                         test.done();
                     });
+        },
+        "test sha1/pass\\0word/sa\\0lt/10000/16": function(test) {
+            pbkdf2("sha1")("pass\u0000word",
+                           "sa\u0000lt",
+                           10000,
+                           16).
+                    then(function(dk) {
+                        dk = new Buffer(dk, "binary").toString("hex");
+                        test.equal(dk, "85f29aba68f6f90c23962a00d2050110");
+                    }).fin(function() {
+                        test.done();
+                    });
+        },
+        "test sha1/pass\\0word//4096/16": function(test) {
+            pbkdf2("sha1")("pass\u0000word",
+                           "",
+                           4096,
+                           16).
+                   then(function(dk) {
+                        dk = new Buffer(dk, "binary").toString("hex");
+                        test.equal(dk, "70d2de40626ec25b534f51e4d4b651d3");
+                   }).fin(function() {
+                        test.done();
+                   });
+        },
+        "test sha1//sa\\0lt/4096/16": function(test) {
+            pbkdf2("sha1")("",
+                           "sa\u0000lt",
+                           4096,
+                           16).
+                   then(function(dk) {
+                        dk = new Buffer(dk, "binary").toString("hex");
+                        test.equal(dk, "215194efe96d656ce10aeb91023d97f3");
+                   }).fin(function() {
+                        test.done();
+                   });
         }
     },
     "SHA256": {
-        "test sha256/salt/password/1/32" : function(test) {
+        "test sha256/password/salt/1/32" : function(test) {
             pbkdf2("sha256")("password", "salt", 1, 32).
                     then(function(dk) {
                         dk = new Buffer(dk, "binary").toString("hex");
@@ -155,7 +191,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha256/salt/password/2/32" : function(test) {
+        "test sha256/password/salt/2/32" : function(test) {
             pbkdf2("sha256")("password", "salt", 2, 32).
                     then(function(dk) {
                         dk = new Buffer(dk, "binary").toString("hex");
@@ -164,7 +200,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha256/salt/password/4096/32" : function(test) {
+        "test sha256/password/salt/4096/32" : function(test) {
             pbkdf2("sha256")("password", "salt", 4096, 32).
                     then(function(dk) {
                         dk = new Buffer(dk, "binary").toString("hex");
@@ -173,7 +209,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha256/saltSALTsaltSALTsaltSALTsaltSALTsalt/passwordPASSWORDpassword/4096/40" : function(test) {
+        "test sha256/passwordPASSWORDpassword/saltSALTsaltSALTsaltSALTsaltSALTsalt/4096/40" : function(test) {
             pbkdf2("sha256")("passwordPASSWORDpassword",
                              "saltSALTsaltSALTsaltSALTsaltSALTsalt",
                              4096,
@@ -185,7 +221,7 @@ module.exports = {
                         test.done();
                     });
         },
-        "test sha256/sa\\0lt/pass\\0word/4096/16" : function(test) {
+        "test sha256/pass\\0word/sa\\0lt/4096/16" : function(test) {
             pbkdf2("sha256")("pass\0word",
                              "sa\0lt",
                              4096,
@@ -193,6 +229,30 @@ module.exports = {
                     then(function(dk) {
                         dk = new Buffer(dk, "binary").toString("hex");
                         test.equal(dk, "89b69d0516f829893c696226650a8687");
+                    }).fin(function() {
+                        test.done();
+                    });
+        },
+        "test sha256/pass\\0word/sa\\0lt/10000/16" : function(test) {
+            pbkdf2("sha256")("pass\0word",
+                             "sa\0lt",
+                             10000,
+                             16).
+                    then(function(dk) {
+                        dk = new Buffer(dk, "binary").toString("hex");
+                        test.equal(dk, "0859b685652f3e1995c34f8812e556e5");
+                    }).fin(function() {
+                        test.done();
+                    });
+        },
+        "test sha256/pass\\0word//4096/16" : function(test) {
+            pbkdf2("sha256")("pass\0word",
+                             "",
+                             4096,
+                             16).
+                    then(function(dk) {
+                        dk = new Buffer(dk, "binary").toString("hex");
+                        test.equal(dk, "656bbff8db07958b1cfe178016a04d62");
                     }).fin(function() {
                         test.done();
                     });
