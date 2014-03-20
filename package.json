@@ -1,34 +1,39 @@
 {
-    "name" : "sazzle",
-    "description" : "The SASL library with PIZZAZZ!",
-    "version" : "0.0.6",
-    "main" : "./index.js",
-    "license" : "MIT",
-    "keywords": ["sasl", "auth", "scram"],
-    "homepage": "https://github.com/linuxwolf/sazzle",
-    "author": {
-        "name": "Matthew A. Miller",
-        "email": "linuxwolf@outer-planes.net"
-    },
-    "contributors": [],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/linuxwolf/sazzle.git"
-    },
-    "bugs": {
-        "url": "https://github.com/linuxwolf/sazzle/issues"
-    },
-    "engines": {
-        "npm": ">=0.10.1"
-    },
-    "dependencies" : {
-        "q": "~0.9"
-    },
-    "devDependencies" : {
-        "nodeunit" : "*",
-        "istanbul": "*"
-    },
-    "scripts": {
-        "test":"./node_modules/.bin/istanbul test ./node_modules/.bin/nodeunit ./test/index.js"
-    }
+  "name": "sazzle",
+  "description": "The SASL library with PIZZAZZ!",
+  "version": "0.0.6",
+  "main": "./index.js",
+  "license": "MIT",
+  "keywords": [
+    "sasl",
+    "auth",
+    "scram"
+  ],
+  "homepage": "https://github.com/linuxwolf/sazzle",
+  "author": {
+    "name": "Matthew A. Miller",
+    "email": "linuxwolf@outer-planes.net"
+  },
+  "contributors": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/linuxwolf/sazzle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/linuxwolf/sazzle/issues"
+  },
+  "engines": {
+    "npm": ">=0.10.1"
+  },
+  "dependencies": {
+    "q": "~0.9"
+  },
+  "devDependencies": {
+    "nodeunit": "^0.8.6",
+    "istanbul": "^0.2.6",
+    "grunt": "^0.4.4",
+    "grunt-contrib-clean": "^0.5.0",
+    "grunt-contrib-nodeunit": "^0.3.3",
+    "grunt-shell": "^0.6.4"
+  }
 }

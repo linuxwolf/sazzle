@@ -1,5 +1,5 @@
 /*!
- * index.js - Main Implementation
+ * Gruntfile.js - build script
  *
  * Copyright (c) 2013-2014 Matthew A. Miller
  *
@@ -22,28 +22,37 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-var helpers = require("./lib/helpers.js"),
-    session = require("./lib/session.js"),
-    factory = require("./lib/factory.js");
 
-// expose some helpers
-exports.PBKDF2 = helpers.PBKDF2;
-
-// setup client factory
-exports.SASLClientFactory = factory.SASLClientFactory;
-exports.client = new factory.SASLClientFactory();
-
-// setup server factory
-exports.SASLServerFactory = factory.SASLServerFactory;
-exports.server = new factory.SASLServerFactory();
-
-// setup factory defaults
-var mechs = [
-    require("./plain.js"),
-    require("./scram-sha1.js")
-];
-
-mechs.forEach(function(m) {
-    m.client && exports.client.register(m.client, true);
-    m.server && exports.server.register(m.server, true);
-});
+module.exports = function(grunt) {
+    grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-contrib-nodeunit");
+    grunt.loadNpmTasks("grunt-shell");
+    
+    grunt.initConfig({
+        nodeunit: {
+            all: ["test/index.js"],
+            options: {
+                reporter: "default"
+            }
+        },
+        shell: {
+            cover: {
+                command: "./node_modules/.bin/istanbul" +
+                         " cover" +
+                         " --report html" +
+                         " ./node_modules/.bin/nodeunit test/index.js",
+                options: {
+                    stdout: true,
+                    stderr: true
+                }
+            }
+        },
+        clean: {
+            coverage: [ "coverage" ]
+        }
+    });
+    
+    grunt.registerTask("test", ["nodeunit"]);
+    grunt.registerTask("coverage", ["shell:cover"]);
+    grunt.registerTask("default", ["test"]);
+};
