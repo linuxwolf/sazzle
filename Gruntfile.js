@@ -70,7 +70,8 @@ module.exports = function(grunt) {
         }
     });
     
+    grunt.registerTask("doc", ["jsdoc:dist"]);
     grunt.registerTask("test", ["nodeunit"]);
     grunt.registerTask("coverage", ["shell:cover"]);
-    grunt.registerTask("default", ["test"]);
+    grunt.registerTask("default", ["test", "doc"]);
 };

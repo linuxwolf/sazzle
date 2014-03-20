@@ -26,16 +26,34 @@ var helpers = require("./lib/helpers.js"),
     session = require("./lib/session.js"),
     factory = require("./lib/factory.js");
 
-// expose some helpers
-exports.PBKDF2 = helpers.PBKDF2;
+/**
+ * @namespace
+ *
+ * @description
+ * The collection of classes and global objects for SAZZLE.
+ */
+var sazzle = module.exports = {};
+
+// expose PBKDF2
+sazzle.PBKDF2 = require("./pbkdf2").pbkdf2;
 
 // setup client factory
-exports.SASLClientFactory = factory.SASLClientFactory;
-exports.client = new factory.SASLClientFactory();
+sazzle.SASLClientFactory = factory.SASLClientFactory;
+/**
+ * Default factory for creating SASL clients.
+ *
+ * @type {SASLClientFactory}
+ */
+sazzle.client = new factory.SASLClientFactory();
 
 // setup server factory
-exports.SASLServerFactory = factory.SASLServerFactory;
-exports.server = new factory.SASLServerFactory();
+sazzle.SASLServerFactory = factory.SASLServerFactory;
+/**
+ * Default factory for creating SASL servers.
+ *
+ * @type {SASLServerFactory}
+ */
+sazzle.server = new factory.SASLServerFactory();
 
 // setup factory defaults
 var mechs = [
