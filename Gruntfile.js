@@ -26,9 +26,27 @@
 module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-contrib-nodeunit");
+    grunt.loadNpmTasks("grunt-jsdoc");
     grunt.loadNpmTasks("grunt-shell");
     
     grunt.initConfig({
+        jsdoc: {
+            dist: {
+                src: [
+                    "README.md",
+                    "index.js",
+                    "pbkdf2.js",
+                    "plain.js",
+                    "scram-sha1.js",
+                    "lib/*.js"
+                ],
+                dest: "doc",
+                options: {
+                    template: "node_modules/grunt-jsdoc/node_modules/ink-docstrap/template",
+                    configure: "jsdoc.json"
+                }
+            }
+        },
         nodeunit: {
             all: ["test/index.js"],
             options: {
