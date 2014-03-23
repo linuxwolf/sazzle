@@ -72,6 +72,51 @@ module.exports = {
 
         test.done();
     },
+    "test create (by function)" : function(test) {
+        var mech = {
+            "name": "mech",
+            "stepStart" : function(config) {
+                return q.resolve({
+                    state: "complete",
+                    data: new Buffer("client initial")
+                });
+            }
+        };
+        var config,
+            session;
+
+        config = {};
+        session = SASLSession(mech, config);
+        test.equal(session.mechanism, mech.name);
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
+        test.ok(!session.completed);
+
+        config = { state:"complete" };
+        session = new SASLSession(mech, config);
+        test.equal(session.mechanism, mech.name);
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
+        test.ok(!session.completed);
+
+        config = {
+            username:"bilbo.baggins",
+            password:"! 84G3nd"
+        };
+        session = new SASLSession(mech, config);
+        test.equal(session.mechanism, mech.name);
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
+        test.ok(!session.completed);
+
+        session = new SASLSession(mech);
+        test.equal(session.mechanism, mech.name);
+        test.ok(session.properties);
+        test.ok(typeof(session.properties) === "object");
+        test.ok(!session.completed);
+
+        test.done();
+    },
     "test step single-stage success": function(test) {
         var config,
             session;
@@ -115,6 +160,74 @@ module.exports = {
 
                 return q.resolve({
                     state:"complete",
+                    data: new Buffer("client initial:" +
+                                     config.username + ":" +
+                                     config.password),
+                    username: "bilbo.baggins"
+                });
+            }
+        };
+        config = {username:"bilbo.baggins", password:"! 84G3nd"};
+        session = new SASLSession(mech, config);
+        var promise = session.step();
+        test.ok(promise);
+        test.equal(typeof(promise.then), "function");
+        promise.then(function(output) {
+            test.ok(output instanceof Buffer);
+            test.equal(output.toString(), "client initial:bilbo.baggins:! 84G3nd");
+            test.ok(session.completed);
+            test.done();
+        }, function(err) {
+            test.fail(err && err.message);
+            test.done();
+        });
+    },
+    "test step single-stage success (mech returns directly)": function(test) {
+        var config,
+            session;
+        var mech = {
+            name : "MOCK-MECH",
+            stepStart: function(config, input) {
+                test.ok(config);
+                test.equal(config.state, "start");
+                test.ok(!input);
+
+                return {
+                    state:"complete",
+                    data: new Buffer("client initial:" +
+                                     config.username + ":" +
+                                     config.password),
+                    username: "bilbo.baggins"
+                };
+            }
+        };
+        config = {username:"bilbo.baggins", password:"! 84G3nd"};
+        session = new SASLSession(mech, config);
+        var promise = session.step();
+        test.ok(promise);
+        test.equal(typeof(promise.then), "function");
+        promise.then(function(output) {
+            test.ok(output instanceof Buffer);
+            test.equal(output.toString(), "client initial:bilbo.baggins:! 84G3nd");
+            test.ok(session.completed);
+            test.done();
+        }, function(err) {
+            test.fail(err && err.message);
+            test.done();
+        });
+    },
+    "test step single-stage success (config updated)": function(test) {
+        var config,
+            session;
+        var mech = {
+            name : "MOCK-MECH",
+            stepStart: function(config, input) {
+                test.ok(config);
+                test.equal(config.state, "start");
+                test.ok(!input);
+                
+                config.state = "complete";
+                return q.resolve({
                     data: new Buffer("client initial:" +
                                      config.username + ":" +
                                      config.password)
@@ -193,6 +306,53 @@ module.exports = {
             test.ok(promise);
             test.equal(typeof(promise.then), "function");
             promise.then(tutils.unexpectedPass(test), completeRejected);
+        };
+        var completeRejected = function(err) {
+            test.ok(err instanceof Error);
+            test.equal(err.message, "invalid state");
+            test.ok(session.completed);
+            test.done();
+        };
+
+        promise = session.step();
+        test.ok(promise);
+        test.equal(typeof(promise.then), "function");
+        promise.then(startResolved,
+                     tutils.unexpectedFail(test));
+    },
+    "test step single-stage failure (invalid input)": function(test) {
+        var config,
+            session;
+        var mech = {
+            name : "MOCK-MECH",
+            stepStart: function(config, input) {
+                test.ok(config);
+                test.equal(config.state, "start");
+                test.ok(!input);
+
+                return q.resolve({
+                    state: "complete",
+                    data: new Buffer("client initial")
+                });
+            }
+        };
+        config = {};
+        session = new SASLSession(mech, config);
+
+        var promise;
+        var startResolved = function(output) {
+            test.ok(output instanceof Buffer);
+            test.equal(output.toString(), "client initial");
+            test.ok(session.completed);
+
+            try {
+                var promise = session.step({});
+                test.fail("unexpected success");
+            } catch (err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid input");
+            }
+            test.done();
         };
         var completeRejected = function(err) {
             test.ok(err instanceof Error);
