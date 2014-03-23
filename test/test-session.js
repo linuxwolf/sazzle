@@ -1,7 +1,7 @@
 /*!
  * test/test-session.js - SASL Session Tests
  *
- * Copyright (c) 2013 Matthew A. Miller
+ * Copyright (c) 2013-2014 Matthew A. Miller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
