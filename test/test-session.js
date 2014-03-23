@@ -277,6 +277,62 @@ module.exports = {
             test.done();
         });
     },
+    "test step single-stage failure (from mech directly)": function(test) {
+        var config,
+            session;
+        var mech = {
+            name : "MOCK-MECH",
+            stepStart: function(config, input) {
+                test.ok(config);
+                test.equal(config.state, "start");
+                test.ok(!input);
+
+                return new Error("mechanism failure");
+            }
+        };
+        config = {};
+        session = new SASLSession(mech, config);
+        var promise = session.step();
+        test.ok(promise);
+        test.equal(typeof(promise.then), "function");
+        promise.then(function(output) {
+            test.fail();
+            test.done();
+        }, function(err) {
+            test.ok(err instanceof Error);
+            test.equal(err.message, "mechanism failure");
+            test.ok(session.completed);
+            test.done();
+        });
+    },
+    "test step single-stage failure (thrown from mech)": function(test) {
+        var config,
+            session;
+        var mech = {
+            name : "MOCK-MECH",
+            stepStart: function(config, input) {
+                test.ok(config);
+                test.equal(config.state, "start");
+                test.ok(!input);
+
+                throw new Error("mechanism failure");
+            }
+        };
+        config = {};
+        session = new SASLSession(mech, config);
+        var promise = session.step();
+        test.ok(promise);
+        test.equal(typeof(promise.then), "function");
+        promise.then(function(output) {
+            test.fail();
+            test.done();
+        }, function(err) {
+            test.ok(err instanceof Error);
+            test.equal(err.message, "mechanism failure");
+            test.ok(session.completed);
+            test.done();
+        });
+    },
     "test step single-stage failure (invalid state)": function(test) {
         var config,
             session;
