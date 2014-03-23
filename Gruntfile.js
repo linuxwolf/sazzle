@@ -28,10 +28,11 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-nodeunit");
     grunt.loadNpmTasks("grunt-jsdoc");
     grunt.loadNpmTasks("grunt-shell");
+    grunt.loadNpmTasks("grunt-express");
     
     grunt.initConfig({
         jsdoc: {
-            dist: {
+            all: {
                 src: [
                     "README.md",
                     "index.js",
@@ -65,13 +66,57 @@ module.exports = function(grunt) {
                 }
             }
         },
+        express: {
+            nodeunit: {
+                options: {
+                    port: 12676,
+                    hostname: "localhost",
+                    bases: "coverage",
+                    livereload: 35759,
+                    open: "http://localhost:<%= express.nodeunit.options.port%>/"
+                }
+            },
+            jsdoc: {
+                options: {
+                    port: 12677,
+                    hostname: "localhost",
+                    bases: "doc",
+                    livereload: 35758,
+                    open: "http://localhost:<%= express.jsdoc.options.port%>/"
+                }
+            }
+        },
+        watch: {
+            nodeunit: {
+                files: [ "!Gruntfile.js", "*.js", "lib/***/.js", "test/**/*.js" ],
+                tasks: [ "shell:cover" ],
+                options: {
+                    livereload: 35759
+                }
+            },
+            jsdoc: {
+                files: [ "!Gruntfile.js", "*.js", "lib/*.js" ],
+                tasks: [ "jsdoc:all" ],
+                options: {
+                    livereload: 35758
+                }
+            }
+        },
+        ci: {
+            doc: [ "jsdoc:all", "express:jsdoc", "watch:jsdoc" ],
+            test: [ "shell:cover", "express:nodeunit", "watch:nodeunit" ]
+        },
         clean: {
             coverage: [ "coverage" ]
         }
     });
     
-    grunt.registerTask("doc", ["jsdoc:dist"]);
-    grunt.registerTask("test", ["nodeunit"]);
+    grunt.registerTask("doc", ["jsdoc:all"]);
+    grunt.registerTask("test", ["shell:cover"]);
     grunt.registerTask("coverage", ["shell:cover"]);
+    grunt.registerMultiTask("ci", function() {
+        grunt.task.run(this.data);
+    });
+    
     grunt.registerTask("default", ["test", "doc"]);
 };
