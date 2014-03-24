@@ -23,7 +23,7 @@
  */
 var q = require("q"),
     helpers = require("./lib/helpers.js"),
-    pbkdf2 = require("./pbkdf2.js").pbkdf2;
+    pbkdf2 = require("./lib/pbkdf2.js").pbkdf2;
 
 /**
  * client config properties:
