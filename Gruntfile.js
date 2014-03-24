@@ -36,10 +36,8 @@ module.exports = function(grunt) {
                 src: [
                     "README.md",
                     "index.js",
-                    "pbkdf2.js",
-                    "plain.js",
-                    "scram-sha1.js",
-                    "lib/*.js"
+                    "lib/*.js",
+                    "mechanisms/*.js"
                 ],
                 dest: "doc",
                 options: {
@@ -88,14 +86,19 @@ module.exports = function(grunt) {
         },
         watch: {
             nodeunit: {
-                files: [ "!Gruntfile.js", "*.js", "lib/***/.js", "test/**/*.js" ],
+                files: [ "index.js",
+                         "lib/***/.js",
+                         "mechanisms/**/*.js",
+                         "test/**/*.js" ],
                 tasks: [ "shell:cover" ],
                 options: {
                     livereload: 35759
                 }
             },
             jsdoc: {
-                files: [ "!Gruntfile.js", "*.js", "lib/*.js" ],
+                files: [ "index.js",
+                         "lib/*.js",
+                         "mechanisms/*.js" ],
                 tasks: [ "jsdoc:all" ],
                 options: {
                     livereload: 35758
