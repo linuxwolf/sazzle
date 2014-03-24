@@ -25,7 +25,7 @@ var q = require("q"),
     tutils = require("./utils.js"),
     helpers = require("../lib/helpers.js"),
     PBKDF2 = require("../lib/pbkdf2.js"),
-    PLAIN = require("../plain.js");
+    PLAIN = require("../mechanisms/plain.js");
 
 module.exports = {
     client: {

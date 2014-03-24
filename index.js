@@ -57,7 +57,7 @@ sazzle.server = new factory.SASLServerFactory();
 
 // setup factory defaults
 var mechs = [
-    require("./plain.js"),
+    require("./mechanisms/plain.js"),
     require("./scram-sha1.js")
 ];
 

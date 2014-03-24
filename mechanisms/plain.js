@@ -22,8 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 var q = require("q"),
-    helpers = require("./lib/helpers.js"),
-    pbkdf2 = require("./lib/pbkdf2.js").pbkdf2;
+    helpers = require("../lib/helpers.js"),
+    pbkdf2 = require("../lib/pbkdf2.js").pbkdf2;
 
 /**
  * client config properties:
