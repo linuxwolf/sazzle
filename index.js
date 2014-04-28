@@ -32,10 +32,10 @@ var helpers = require("./lib/helpers.js"),
  * @description
  * The collection of classes and global objects for SAZZLE.
  */
-var sazzle = module.exports = {};
+var sazzle = module.exports;
 
 // expose PBKDF2
-sazzle.PBKDF2 = require("./pbkdf2").pbkdf2;
+sazzle.PBKDF2 = require("./lib/pbkdf2").pbkdf2;
 
 // setup client factory
 sazzle.SASLClientFactory = factory.SASLClientFactory;
@@ -62,6 +62,6 @@ var mechs = [
 ];
 
 mechs.forEach(function(m) {
-    m.client && exports.client.register(m.client, true);
-    m.server && exports.server.register(m.server, true);
+    m.client && sazzle.client.register(m.client, true);
+    m.server && sazzle.server.register(m.server, true);
 });
