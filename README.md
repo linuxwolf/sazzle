@@ -1,6 +1,6 @@
 # SAZZLE - The SASL library with *PIZZAZZ*! #
 
-**SAZZLE** is a pure JavaScript library for the Simple Authentication and Security Layer ([SASL](http://tools.ietf.org/html/rfc4422)). The goal is to provide a simple promised-based framework  for processing SASL challenges and responses.
+**SAZZLE** is a pure JavaScript library for the Simple Authentication and Security Layer ([SASL](http://tools.ietf.org/html/rfc4422)). The goal is to provide a simple promised-based framework for processing SASL challenges and responses.
 
 This library includes built-in support for [PLAIN](https://tools.ietf.org/html/rfc4616) and [SCRAM-SHA1](http://tools.ietf.org/html/rfc5802), while additional (or alternative) mechanisms can be added as needed.
 
@@ -8,9 +8,14 @@ This software is liecensed under the terms of the [MIT License](http://opensourc
 
 ## Installation ##
 
-From sources:
+To install the current stable release:
 
-    npm install git+https://github.com/linuxwolf/sazzle.git
+    npm install sazzle
+
+To install from sources:
+
+    git clone git@github.com:linuxwolf/sazzle.git
+    npm install ./sazzle
 
 ## Usage ##
 
@@ -31,7 +36,8 @@ TL;DR -- ficticious client version:
         // NOTE: output is a Buffer
         socket.send(output);
     });
-    socket.on("data", function(input) {
+    
+    var onSASL = function(input) {
         // call step() to keep going, until completed!
         ssession.step(input).then(function(output) {
             if (output) {
@@ -42,7 +48,7 @@ TL;DR -- ficticious client version:
                 console.log("auth succeeded (username == %s; authzid == %s)",
                             ssession.properties.username,
                             ssession.properties.authzid);
-                socket.removeListener("data", arguments.callee);
+                socket.removeListener("data", onSASL);
                 // ... move on ...
             }
         }, function(err) {
@@ -50,7 +56,8 @@ TL;DR -- ficticious client version:
             console.log("auth failed: %s", err.message);
             // c'est la vie
         });
-    });
+    };
+    socket.on("data", onSASL);
 
 TL;DR -- ficticious server version:
 
@@ -74,7 +81,8 @@ TL;DR -- ficticious server version:
         // process client initial
         ssession.step(input.data).then(function(output) {
             socket.send(output);
-            socket.on("data", function(input) {
+            
+            function onSASL(output) {
                 ssession.step(input).then(function(output) {
                     if (output) {
                         socket.send(output);
@@ -84,7 +92,7 @@ TL;DR -- ficticious server version:
                         console.log("auth succeeded (username == %s; authzid == %s)",
                                     ssession.properties.username,
                                     ssession.properties.authzid);
-                        socket.removeListener("data", arguments.callee);
+                        socket.removeListener("data", onSASL);
                         // ... move on ...
                     }
                 }, function(err) {
@@ -92,6 +100,7 @@ TL;DR -- ficticious server version:
                     console.log("auth failed: %s", err.message);
                     // c'est la vie
                 });
-            })
+            };
+            socket.on("data", onSASL);
         });
     });
