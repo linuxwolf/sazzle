@@ -114,14 +114,26 @@ module.exports = function(grunt) {
                 }
             }
         },
+        ci: {
+            doc: [ "jsdoc:all", "express:jsdoc", "watch:jsdoc" ],
+            test: [ "shell:cover", "express:nodeunit", "watch:nodeunit" ]
+        },
         clean: {
             coverage: [ "coverage" ]
         }
     });
     
-    grunt.registerTask("doc", ["jsdoc:all"]);
-    grunt.registerTask("test", ["shell:cover"]);
-    grunt.registerTask("coverage", ["shell:cover"]);
+    grunt.registerTask("doc",
+                       "Generate API documentation",
+                       ["jsdoc:all"]);
+    grunt.registerTask("test",
+                       "Run all unit tests",
+                       ["shell:cover"]);
+    grunt.registerMultiTask("ci",
+                            "run continuous integration tasks",
+                            function() {
+        grunt.task.run(this.data);
+    });
     
     grunt.registerTask("default", ["test", "doc"]);
 };
