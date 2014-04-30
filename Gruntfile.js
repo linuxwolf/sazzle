@@ -26,6 +26,7 @@
 module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-contrib-nodeunit");
+    grunt.loadNpmTasks("grunt-github-pages");
     grunt.loadNpmTasks("grunt-jsdoc");
     grunt.loadNpmTasks("grunt-shell");
     grunt.loadNpmTasks("grunt-express");
@@ -50,6 +51,14 @@ module.exports = function(grunt) {
             all: ["test/index.js"],
             options: {
                 reporter: "default"
+            }
+        },
+        githubPages: {
+            doc: {
+                options: {
+                    commitMessage: "updated docs"
+                },
+                src: "doc"
             }
         },
         shell: {
@@ -105,10 +114,6 @@ module.exports = function(grunt) {
                 }
             }
         },
-        ci: {
-            doc: [ "jsdoc:all", "express:jsdoc", "watch:jsdoc" ],
-            test: [ "shell:cover", "express:nodeunit", "watch:nodeunit" ]
-        },
         clean: {
             coverage: [ "coverage" ]
         }
@@ -117,9 +122,6 @@ module.exports = function(grunt) {
     grunt.registerTask("doc", ["jsdoc:all"]);
     grunt.registerTask("test", ["shell:cover"]);
     grunt.registerTask("coverage", ["shell:cover"]);
-    grunt.registerMultiTask("ci", function() {
-        grunt.task.run(this.data);
-    });
     
     grunt.registerTask("default", ["test", "doc"]);
 };
