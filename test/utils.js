@@ -24,13 +24,13 @@
 
 exports.unexpectedPass = function(test) {
     return (function() {
-        test.fail("unexpected success");
+        test.ok(false, "unexpected success");
         test.done();
     });
 };
 exports.unexpectedFail = function(test) {
     return (function(err) {
-        test.fail(err && err.message);
+        test.ok(false, "unexpected failure: " + err && err.message);
         test.done();
     });
 };
