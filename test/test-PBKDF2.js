@@ -69,7 +69,7 @@ module.exports = {
         }, Error, "iterations must be a positive integer");
         test.done();
     },
-    "test failure (bad iterations)" : function(test) {
+    "test failure (bad keylength)" : function(test) {
         test.throws(function() {
             pbkdf2("sha1")("password", "salt", 1, "blah");
         }, Error, "key length must be a positive integer");
