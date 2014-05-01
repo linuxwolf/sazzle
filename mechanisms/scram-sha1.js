@@ -276,10 +276,7 @@ exports.client = {
             fields.messages.push(message.join(","));
 
             // calculate SaltedPassword
-            return pbkdf2("sha1")(pwd,
-                                  fields.salt,
-                                  fields.iterations,
-                                  20);
+            return pbkdf2("sha1")(pwd, fields.salt, fields.iterations, 20);
         }).then(function(spwd) {
             // calculate ClientKey, ClientSig, ClientProof
             var key, proof, sig;
@@ -429,7 +426,8 @@ exports.server = {
        });
     },
     stepAuth: function(config, input) {
-        var fields = config.authScram;
+        var fields = config.authScram,
+            usr = fields.username;
         input = input.toString("binary").
                 split(",");
 
@@ -444,10 +442,8 @@ exports.server = {
             __parseClientFields(fields, input, ["c", "r", "p"]),
             helpers.promisedValue(config, "password", fields.username)
         ]).then(function(factors) {
-            var fields = factors[0],
-                pwd = factors[1],
-                binding = fields.binding,
-                nonce = fields.nonce;
+            var parsed = factors[0],
+                pwd = factors[1];
 
             // validate binding/nonce
             if (fields.binding !== binding) {
@@ -490,6 +486,8 @@ exports.server = {
                 authz = authz(config, usr, fields.authzid);
             } else if   (authz == null) {
                 authz = !fields.authzid || (usr === fields.authzid);
+            } else {
+                return q.reject(new Error("bad internal authzid"));
             }
 
             return q.resolve(authz);
