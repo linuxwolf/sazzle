@@ -69,6 +69,9 @@ module.exports = {
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (username callback)": function(test) {
+            test.done();
         }
     },
     server: {
