@@ -30,8 +30,17 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-jsdoc");
     grunt.loadNpmTasks("grunt-shell");
     grunt.loadNpmTasks("grunt-express");
+    grunt.loadNpmTasks("grunt-release");
+    grunt.loadNpmTasks("grunt-bump");
     
     grunt.initConfig({
+        bump: {
+            options: {
+                commit: false,
+                createTag: false,
+                push: false
+            }
+        },
         jsdoc: {
             all: {
                 src: [
@@ -60,6 +69,11 @@ module.exports = function(grunt) {
                 },
                 src: "doc"
             }
+        },
+        release: {
+            bump: false,
+            tagMessage: "v<%= version %>",
+            commitMessage: "Relase <%= version %>"
         },
         shell: {
             cover: {
@@ -129,6 +143,20 @@ module.exports = function(grunt) {
     grunt.registerTask("test",
                        "Run all unit tests",
                        ["shell:cover"]);
+
+    grunt.registerTask("publish",
+                       "Publishes next version",
+                       ["bump", "test", "doc", "githubPages", "release"]);
+    grunt.registerTask("publish:patch",
+                       "Publishes next patch version",
+                       ["bump:patch", "test", "doc", "githubPages", "release"]);
+    grunt.registerTask("publish:minor",
+                       "Publishes next minor version",
+                       ["bump:minor", "test", "doc", "githubPages", "release"]);
+    grunt.registerTask("publish:major",
+                       "Publishes next major version",
+                       ["bump:major", "test", "doc", "githubPages", "release"]);
+                       
     grunt.registerMultiTask("ci",
                             "run continuous integration tasks",
                             function() {

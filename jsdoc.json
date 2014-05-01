@@ -4,8 +4,8 @@
     ],
     "templates": {
         "systemName": "SAZZLE",
-        "copyright":  "© 2012-2014, Matthew A. Miller",
-        "navType": "verticle",
+        "copyright":  "Copyright © 2012-2014, Matthew A. Miller",
+        "navType": "vertical",
         "theme": "flatly"
     }
 }

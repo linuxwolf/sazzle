@@ -39,7 +39,9 @@
     "grunt-express": "^1.2.1",
     "grunt-shell": "^0.6.4",
     "ink-docstrap": "^0.3.0-0",
-    "grunt-github-pages": "0.0.4"
+    "grunt-github-pages": "0.0.4",
+    "grunt-release": "^0.7.0",
+    "grunt-bump": "0.0.13"
   },
   "peerDependencies": {
     "grunt-cli": "*"
