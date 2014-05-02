@@ -70,7 +70,7 @@ module.exports = {
                 test.done();
             }).fail(tutils.unexpectedFail(test));
         },
-        "test success with authzid" : function(test) {
+        "test success (with authzid)" : function(test) {
             var config = {
                 state:"start",
                 username:"bilbo.baggins",
@@ -191,6 +191,264 @@ module.exports = {
                 test.done();
             }).fail(tutils.unexpectedFail(test));
         },
+        "test success (username value)" : function(test) {
+            var config = {
+                state:"start",
+                username: "bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (username callback)" : function(test) {
+            var config = {
+                state:"start",
+                username: function(cfg) {
+                    test.strictEqual(cfg, config);
+                    return "bilbo.baggins"
+                },
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (username promise)" : function(test) {
+            var config = {
+                state:"start",
+                username: function(cfg) {
+                    test.strictEqual(cfg, config);
+                    return q.resolve("bilbo.baggins");
+                },
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (password callback)" : function(test) {
+            var config = {
+                state:"start",
+                password: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    return "! 84G3nd";
+                },
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (password promise)" : function(test) {
+            var config = {
+                state:"start",
+                password: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    return q.resolve("! 84G3nd");
+                },
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (nonce callback)" : function(test) {
+            var config = {
+                state:"start",
+                password: "! 84G3nd",
+                nonce: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return "servernonce";
+                },
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (nonce promise)" : function(test) {
+            var config = {
+                state:"start",
+                password: "! 84G3nd",
+                nonce: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return q.resolve("servernonce");
+                },
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
         "test success (implicit nonce)": function(test) {
             var config = {
                 state:"start",
@@ -218,6 +476,82 @@ module.exports = {
             
             // TODO: validate calculations?
         },
+        "test success (salt callback)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return "salt";
+                },
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (salt promise)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return q.resolve("salt");
+                },
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
         "test success (implicit salt)": function(test) {
             var config = {
                 state:"start",
@@ -244,6 +578,82 @@ module.exports = {
             }).fail(tutils.unexpectedFail(test));
             
             // TODO: validate calculations?
+        },
+        "test success (iterations callback)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return 1024;
+                }
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (iterations promise)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return q.resolve(1024);
+                }
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
         },
         "test success (implicit iterations)": function(test) {
             var config = {
