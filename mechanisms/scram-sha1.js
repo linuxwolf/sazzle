@@ -63,8 +63,7 @@ var PTN_FIELD = /^([^\=]+)\=(.+)$/;
 var __parseServerFields = function(fields, input, expected, allowed) {
     var unexpected = [],
         empty = 0;
-    expected = (expected || []).slice();
-    allowed = (allowed || []).slice();
+    expected = expected.slice();
     
     try {
         input.forEach(function(f) {
@@ -82,10 +81,6 @@ var __parseServerFields = function(fields, input, expected, allowed) {
             pos = expected.indexOf(f[1]);
             if (pos !== -1) {
                 expected.splice(pos, 1);
-            }
-            pos = allowed.indexOf(f[1]);
-            if (pos !== -1) {
-                allowed.splice(pos, 1);
             }
             switch (f[1]) {
                 case "i":   // iterations
@@ -126,7 +121,7 @@ var __parseServerFields = function(fields, input, expected, allowed) {
 };
 var __parseClientFields = function(fields, input, expected, allowed) {
     var unexpected = [];
-    expected = (expected || []).slice();
+    expected = expected.slice();
     allowed = (allowed || []).slice();
 
     try {
