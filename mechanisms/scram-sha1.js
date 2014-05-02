@@ -61,12 +61,18 @@ var calcServerSig = function(key, msg) {
 var PTN_FIELD = /^([^\=]+)\=(.+)$/;
 
 var __parseServerFields = function(fields, input, expected, allowed) {
-    var unexpected = [];
+    var unexpected = [],
+        empty = 0;
     expected = (expected || []).slice();
     allowed = (allowed || []).slice();
-
+    
     try {
         input.forEach(function(f) {
+            if (!f) {
+                empty++;
+                return;
+            }
+
             f = PTN_FIELD.exec(f);
             if (!f) {
                 throw new Error("invalid field");
@@ -110,7 +116,7 @@ var __parseServerFields = function(fields, input, expected, allowed) {
         var err = new Error("unexpected fields");
         err.fields = unexpected;
         return q.reject(err);
-    } else if   (expected.length) {
+    } else if   (expected.length || empty > 0) {
         var err = new Error("missing fields");
         err.fields = expected;
         return q.reject(err);

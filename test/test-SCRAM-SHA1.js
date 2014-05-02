@@ -70,6 +70,301 @@ module.exports = {
                 test.done();
             }).fail(tutils.unexpectedFail(test));
         },
+        "test success (username callback)" : function(test) {
+            var config = {
+                state:"start",
+                username:function(cfg) {
+                    test.strictEqual(cfg, config);
+                    
+                    return "bilbo.baggins";
+                },
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (username promise)" : function(test) {
+            var config = {
+                state:"start",
+                username:function(cfg) {
+                    test.strictEqual(cfg, config);
+                    
+                    return q.resolve("bilbo.baggins");
+                },
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (password callback)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    
+                    return "! 84G3nd";
+                },
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (password promise)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    
+                    return q.resolve("! 84G3nd");
+                },
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (nonce callback)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:function(cfg) {
+                    test.strictEqual(cfg, config);
+                    
+                    return "clientnonce";
+                }
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (nonce promise)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:function(cfg) {
+                    test.strictEqual(cfg, config);
+                    
+                    return q.resolve("clientnonce");
+                }
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (implicit nonce)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.ok(out.data);
+                
+                var match = /r=(.+)/.exec(out.data.toString("binary"));
+                test.ok(match);
+                test.ok(match[0]);
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+            
+            // TODO: calculate validation?
+        },
         "test success (with authzid)" : function(test) {
             var config = {
                 state:"start",
@@ -112,13 +407,194 @@ module.exports = {
                 test.done();
             }).fail(tutils.unexpectedFail(test));
         },
-        "test success (username callback)": function(test) {
+        "test success (with authzid callback)" : function(test) {
             var config = {
                 state:"start",
-                username: function(cfg) {
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce",
+                authzid: function(cfg, user) {
                     test.strictEqual(cfg, config);
-                    return "bilbo.baggins";
-                },
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return "bilbo.baggins@hobbiton.example";
+                }
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,a=bilbo.baggins@hobbiton.example,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=bixhPWJpbGJvLmJhZ2dpbnNAaG9iYml0b24uZXhhbXBsZSw=,r=clientnonceservernonce,p=vnnC8WQXSnyNlkX5am52mxPfFdk=");
+
+                var input = "v=65KZKX41ok12CpriU5KdPHi8l98=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins@hobbiton.example");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (with authzid promise)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce",
+                authzid: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.strictEqual(user, "bilbo.baggins");
+                    
+                    return q.resolve("bilbo.baggins@hobbiton.example");
+                }
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,a=bilbo.baggins@hobbiton.example,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=bixhPWJpbGJvLmJhZ2dpbnNAaG9iYml0b24uZXhhbXBsZSw=,r=clientnonceservernonce,p=vnnC8WQXSnyNlkX5am52mxPfFdk=");
+
+                var input = "v=65KZKX41ok12CpriU5KdPHi8l98=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins@hobbiton.example");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test failure (auth invalid field)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024,foobar";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid field");
+                test.done();
+            });
+        },
+        "test failure (auth missing fields)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "missing fields");
+                test.done();
+            });
+        },
+        "test failure (auth unexpected fields)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024,z=foobar";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "unexpected fields");
+                test.done();
+            });
+        },
+        "test failure (verify invalid field)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
                 password:"! 84G3nd",
                 nonce:"clientnonce"
             };
@@ -143,18 +619,261 @@ module.exports = {
                 test.equal(out.data.toString("binary"),
                            "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
 
-                var input = "v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                var input = "foobar,v=/6r17onFNn3gH3ArXF0auh1aRwo=";
                 promise = mech.stepVerify(config, new Buffer(input, "binary"));
                 test.ok(promise);
                 test.equal(typeof(promise.then), "function");
 
                 return promise;
-            }).then(function(out) {
-                test.equal(out.state, "complete");
-                test.equal(out.username, "bilbo.baggins");
-                test.equal(out.authzid, "bilbo.baggins");
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid field");
                 test.done();
-            }).fail(tutils.unexpectedFail(test));
+            });
+        },
+        "test failure (verify missing fields)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "missing fields");
+                test.done();
+            });
+        },
+        "test failure (verify unexpected fields)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "z=foobar,v=/6r17onFNn3gH3ArXF0auh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "unexpected fields");
+                test.done();
+            });
+        },
+        "test failure (nonce mismatch)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=wrongwrongservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "nonce mismatch");
+                test.done();
+            });
+        },
+        "test failure (invalid iterations - not a number)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=blah";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid iteration");
+                test.done();
+            });
+        },
+        "test failure (invalid iterations - negative)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=-1";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid iteration");
+                test.done();
+            });
+        },
+        "test failure (invalid iterations - zero)" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=0";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid iteration");
+                test.done();
+            });
+        },
+        "test success" : function(test) {
+            var config = {
+                state:"start",
+                username:"bilbo.baggins",
+                password:"! 84G3nd",
+                nonce:"clientnonce"
+            };
+            var mech = SCRAM.client;
+
+            var promise = mech.stepStart(config);
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "n,,n=bilbo.baggins,r=clientnonce");
+
+                var input = "r=clientnonceservernonce,s=c2FsdA==,i=1024";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "verify");
+                test.equal(out.data.toString("binary"),
+                           "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=");
+
+                var input = "v=/6r17evilevilevilevilh1aRwo=";
+                promise = mech.stepVerify(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "verification failed");
+                test.done();
+            });
         }
     },
     server: {
@@ -758,6 +1477,159 @@ module.exports = {
                 test.equal(out.authzid, "bilbo.baggins");
                 test.done();
             }).fail(tutils.unexpectedFail(test));
+        },
+        "test failure (start invalid fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,foo", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(tutils.unexpectedPass(test),
+                         function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid field");
+                test.done();
+            });
+        },
+        "test failure (start missing fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(tutils.unexpectedPass(test),
+                         function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "missing fields");
+                test.done();
+            });
+        },
+        "test failure (start unexpected fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce,z=foo", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(tutils.unexpectedPass(test),
+                         function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "unexpected fields");
+                test.done();
+            });
+        },
+        "test failure (auth invalid fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,foobar,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "invalid field");
+                test.done();
+            });
+        },
+        "test failure (auth missing fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "missing fields");
+                test.done();
+            });
+        },
+        "test failure (auth unexpected fields)" : function(test) {
+            var config = {
+                state:"start",
+                password:"! 84G3nd",
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+
+                var input = "c=biws,r=clientnonceservernonce,z=foobar,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "unexpected fields");
+                test.done();
+            });
         },
         "test failure (want channel binding)" : function(test) {
             var config = {
