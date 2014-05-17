@@ -25,12 +25,10 @@
 
 module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-clean");
-    grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-nodeunit");
     grunt.loadNpmTasks("grunt-github-pages");
     grunt.loadNpmTasks("grunt-jsdoc");
     grunt.loadNpmTasks("grunt-shell");
-    grunt.loadNpmTasks("grunt-express");
     grunt.loadNpmTasks("grunt-release");
     grunt.loadNpmTasks("grunt-bump");
     
@@ -88,51 +86,6 @@ module.exports = function(grunt) {
                 }
             }
         },
-        express: {
-            nodeunit: {
-                options: {
-                    port: 12676,
-                    hostname: "localhost",
-                    bases: "coverage",
-                    livereload: 35759,
-                    open: "http://localhost:<%= express.nodeunit.options.port%>/"
-                }
-            },
-            jsdoc: {
-                options: {
-                    port: 12677,
-                    hostname: "localhost",
-                    bases: "doc",
-                    livereload: 35758,
-                    open: "http://localhost:<%= express.jsdoc.options.port%>/"
-                }
-            }
-        },
-        watch: {
-            nodeunit: {
-                files: [ "index.js",
-                         "lib/***/.js",
-                         "mechanisms/**/*.js",
-                         "test/**/*.js" ],
-                tasks: [ "shell:cover" ],
-                options: {
-                    livereload: 35759
-                }
-            },
-            jsdoc: {
-                files: [ "index.js",
-                         "lib/*.js",
-                         "mechanisms/*.js" ],
-                tasks: [ "jsdoc:all" ],
-                options: {
-                    livereload: 35758
-                }
-            }
-        },
-        ci: {
-            doc: [ "jsdoc:all", "express:jsdoc", "watch:jsdoc" ],
-            test: [ "shell:cover", "express:nodeunit", "watch:nodeunit" ]
-        },
         clean: {
             coverage: [ "coverage" ]
         }
@@ -157,12 +110,6 @@ module.exports = function(grunt) {
     grunt.registerTask("publish:major",
                        "Publishes next major version",
                        ["bump:major", "test", "doc", "githubPages", "release"]);
-                       
-    grunt.registerMultiTask("ci",
-                            "run continuous integration tasks",
-                            function() {
-        grunt.task.run(this.data);
-    });
     
     grunt.registerTask("default", ["test", "doc"]);
 };

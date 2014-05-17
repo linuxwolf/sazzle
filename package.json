@@ -14,7 +14,12 @@
     "name": "Matthew A. Miller",
     "email": "linuxwolf@outer-planes.net"
   },
-  "contributors": [],
+  "contributors": [
+    {
+        "name": "Gavin Llewellyn",
+        "url": "https://github.com/gavllew"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/linuxwolf/sazzle.git"
@@ -34,9 +39,7 @@
     "grunt": "^0.4.4",
     "grunt-contrib-clean": "^0.5.0",
     "grunt-contrib-nodeunit": "^0.3.3",
-    "grunt-contrib-watch": "^0.6.1",
     "grunt-jsdoc": "^0.5.4",
-    "grunt-express": "^1.2.1",
     "grunt-shell": "^0.6.4",
     "grunt-github-pages": "0.0.4",
     "grunt-release": "^0.7.0",
