@@ -76,6 +76,9 @@ exports.client = {
  * - username : string || function(config) { return string || promise }
  *   + if missing, CONTINUE
  *   + if present, input value MUST match (or FAIL)
+ * - authenticate : function(config, username, password) { return boolean || promise }
+ *   + if missing, CONTINUE
+ *   + if present, true == SUCCEED, false == FAIL
  * - password : string || function(config, username) { return string || promise }
  *   + if missing, password == "" and CONTINUE (see below)
  * - prf : string || function(config, username) { return string || promise }
@@ -125,47 +128,53 @@ exports.server = {
                         return q.reject(new Error("not authorized"));
                     }
                     fields.username = usr;
-                    return q.all([
-                        helpers.promisedValue(config, "password", usr),
-                        helpers.promisedValue(config, "prf", usr),
-                        helpers.promisedValue(config, "salt", usr),
-                        helpers.promisedValue(config, "iterations", usr)
-                    ]);
-                }).then(function(factors) {
-                    var cfgPwd = factors[0];
+                    var authn = config.authenticate;
+                    if ("function" === typeof(authn)) {
+                        return authn(config, usr, pwd);
+                    } else {
+                        return q.all([
+                            helpers.promisedValue(config, "password", usr),
+                            helpers.promisedValue(config, "prf", usr),
+                            helpers.promisedValue(config, "salt", usr),
+                            helpers.promisedValue(config, "iterations", usr)
+                        ]).then(function(factors) {
+                            var cfgPwd = factors[0];
 
-                    fields.prf = factors[1] || helpers.DEFAULT_PRF;
-                    fields.salt = factors[2] || helpers.DEFAULT_SALT;
-                    fields.iterations = factors[3] || helpers.DEFAULT_ITERATIONS;
+                            fields.prf = factors[1] || helpers.DEFAULT_PRF;
+                            fields.salt = factors[2] || helpers.DEFAULT_SALT;
+                            fields.iterations = factors[3] ||
+                                                helpers.DEFAULT_ITERATIONS;
 
-                    if (!config.derivedKey) {
-                        return q.resolve([pwd, cfgPwd]);
-                    }
+                            if (!config.derivedKey) {
+                                return q.resolve([pwd, cfgPwd]);
+                            }
 
-                    return q.all([
-                        pbkdf2(fields.prf)(pwd,
-                                           fields.salt,
-                                           fields.iterations),
-                        helpers.promisedValue(config,
-                                              "derivedKey",
-                                              usr,
-                                              fields.prf,
-                                              fields.salt,
-                                              fields.iterations)
-                    ]);
-                }).then(function(crypted) {
-                    if (crypted[0] !== crypted[1]) {
-                        return q.reject(new Error("not authorized"));
-                    }
+                            return q.all([
+                                pbkdf2(fields.prf)(pwd,
+                                                   fields.salt,
+                                                   fields.iterations),
+                                helpers.promisedValue(config,
+                                                      "derivedKey",
+                                                      usr,
+                                                      fields.prf,
+                                                      fields.salt,
+                                                      fields.iterations)
+                            ]);
+                        }).then(function(crypted) {
+                            if (crypted[0] !== crypted[1]) {
+                                return q.reject(new Error("not authorized"));
+                            }
                     
-                    var authz = config.authorize;
-                    if          (typeof(authz) === "function") {
-                        authz = authz(config, usr, authzid);
-                    } else if   (authz == null) {
-                        authz = !authzid || (usr === authzid);
-                    }
+                            var authz = config.authorize;
+                            if          (typeof(authz) === "function") {
+                                authz = authz(config, usr, authzid);
+                            } else if   (authz == null) {
+                                authz = !authzid || (usr === authzid);
+                            }
 
-                    return q.resolve(authz);
+                            return q.resolve(authz);
+                        });
+                    }
                 }).then(function(result) {
                     if (result) {
                         return q.resolve({
