@@ -31,7 +31,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-shell");
     grunt.loadNpmTasks("grunt-release");
     grunt.loadNpmTasks("grunt-bump");
-    
+
     grunt.initConfig({
         bump: {
             options: {
@@ -72,7 +72,7 @@ module.exports = function(grunt) {
         release: {
             bump: false,
             tagMessage: "v<%= version %>",
-            commitMessage: "Relase <%= version %>"
+            commitMessage: "Release <%= version %>"
         },
         shell: {
             cover: {
@@ -90,7 +90,7 @@ module.exports = function(grunt) {
             coverage: [ "coverage" ]
         }
     });
-    
+
     grunt.registerTask("doc",
                        "Generate API documentation",
                        ["jsdoc:all"]);
@@ -110,6 +110,6 @@ module.exports = function(grunt) {
     grunt.registerTask("publish:major",
                        "Publishes next major version",
                        ["bump:major", "test", "doc", "githubPages", "release"]);
-    
+
     grunt.registerTask("default", ["test", "doc"]);
 };
