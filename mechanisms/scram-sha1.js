@@ -64,7 +64,7 @@ var __parseServerFields = function(fields, input, expected, allowed) {
     var unexpected = [],
         empty = 0;
     expected = expected.slice();
-    
+
     try {
         input.forEach(function(f) {
             if (!f) {
@@ -93,7 +93,7 @@ var __parseServerFields = function(fields, input, expected, allowed) {
                     fields["salt"] = new Buffer(f[2], "base64").
                                      toString("binary");
                     break;
-                case "v":   // verification 
+                case "v":   // verification
                     fields["verification"] = new Buffer(f[2], "base64").
                                              toString("binary");
                     break;
@@ -189,7 +189,7 @@ var __parseClientFields = function(fields, input, expected, allowed) {
  *   + if missing, CONTINUE
  * - nonce : string || function(config, username) { return string || promise }
  *   + if missing, generate random then CONTINUE
- * - authzid : string || function(config, username) { return string || promise }
+ * - authzid : string || function(config, username, salt, iterations) { return string || promise }
  *   + if missing, CONTINUE
  * - password : string || function(config, username) { return string || promise }
  *   + if missing, CONTINUE
@@ -332,6 +332,9 @@ exports.client = {
  * - salt : string || function(config, username) { return string || promise }
  *   + if missing, generate random then CONTINUE
  *   !! NOTE: string is expected to be binary, NOT base64
+ * - saltedPassword : string || function(config, username) { return string || promise }
+ *   + if missing, then CONTINUE
+ *   + if present, use instead of "password"
  * - password : string || function(config, username) { return string || promise }
  *   + if missing, input value MUST be "" (or FAIL)
  *   + if present, input value MUST match (or FAIL)
@@ -439,13 +442,11 @@ exports.server = {
         delete fields.binding;
         delete fields.nonce;
 
-        return q.all([
-            __parseClientFields(fields, input, ["c", "r", "p"]),
-            helpers.promisedValue(config, "password", fields.username)
-        ]).then(function(factors) {
-            var parsed = factors[0],
-                pwd = factors[1];
-
+        return __parseClientFields(
+            fields,
+            input,
+            ["c", "r", "p"]
+        ).then(function(parsed) {
             // validate binding/nonce
             if (fields.binding !== binding) {
                 return q.reject(new Error("invalid binding"));
@@ -460,11 +461,27 @@ exports.server = {
                 "r=" + fields.nonce
             ].join(","));
 
+            return helpers.promisedValue(config,
+                                         "saltedPassword",
+                                         fields.username,
+                                         fields.salt,
+                                         fields.iterations);
+        }).then(function(salted) {
             // calculate SaltedPassword
-            return pbkdf2("sha1")(pwd,
-                                  fields.salt,
-                                  fields.iterations,
-                                  20);
+            if (salted) {
+                return q.resolve(salted);
+            }
+
+            return helpers.promisedValue(
+                config,
+                "password",
+                fields.username
+            ).then(function(pwd) {
+                return pbkdf2("sha1")(pwd,
+                                      fields.salt,
+                                      fields.iterations,
+                                      20);
+            });
         }).then(function(spwd) {
             // calculate proof
             var key,
