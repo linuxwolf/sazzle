@@ -332,7 +332,7 @@ exports.client = {
  * - salt : string || function(config, username) { return string || promise }
  *   + if missing, generate random then CONTINUE
  *   !! NOTE: string is expected to be binary, NOT base64
- * - saltedPassword : string || function(config, username) { return string || promise }
+ * - derivedKey : string || function(config, username) { return string || promise }
  *   + if missing, then CONTINUE
  *   + if present, use instead of "password"
  * - password : string || function(config, username) { return string || promise }
@@ -462,7 +462,7 @@ exports.server = {
             ].join(","));
 
             return helpers.promisedValue(config,
-                                         "saltedPassword",
+                                         "derivedKey",
                                          fields.username,
                                          fields.salt,
                                          fields.iterations);
