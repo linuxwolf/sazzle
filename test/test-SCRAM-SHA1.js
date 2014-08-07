@@ -1092,6 +1092,80 @@ module.exports = {
                 test.done();
             }).fail(tutils.unexpectedFail(test));
         },
+        "test success (derivedKey callback)" : function(test) {
+            var config = {
+                state:"start",
+                derivedKey: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    return new Buffer("52bd8709d86a464b15c1d396ac349f22f64fa731", "hex").toString("binary");
+                },
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            };
+            var mech = SCRAM.server;
+  
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+  
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+  
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
+        "test success (derivedKey promise)" : function(test) {
+            var config = {
+                state:"start",
+                derivedKey: function(cfg, user) {
+                    test.strictEqual(cfg, config);
+                    test.equal(user, "bilbo.baggins");
+                    return q.resolve(new Buffer("52bd8709d86a464b15c1d396ac349f22f64fa731", "hex").toString("binary"));
+                },
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            };
+            var mech = SCRAM.server;
+  
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+  
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7N9y6xHNE5n7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+  
+                return promise;
+            }).then(function(out) {
+                test.equal(out.state, "complete");
+                test.equal(out.data.toString("binary"),
+                           "v=/6r17onFNn3gH3ArXF0auh1aRwo=");
+                test.equal(out.username, "bilbo.baggins");
+                test.equal(out.authzid, "bilbo.baggins");
+                test.done();
+            }).fail(tutils.unexpectedFail(test));
+        },
         "test success (nonce callback)" : function(test) {
             var config = {
                 state:"start",
@@ -1733,7 +1807,7 @@ module.exports = {
                 test.done();
             });
         },
-        "test failure (bad proof)" : function(test) {
+        "test failure (bad proof - password)" : function(test) {
             var config = {
                 state:"start",
                 password:"! 84G3nd",
@@ -1756,6 +1830,37 @@ module.exports = {
                 test.ok(promise);
                 test.equal(typeof(promise.then), "function");
 
+                return promise;
+            }).then(tutils.unexpectedPass(test),
+                    function(err) {
+                test.ok(err instanceof Error);
+                test.equal(err.message, "not authorized");
+                test.done();
+            });
+        },
+        "test failure (bad proof - derivedKey)" : function(test) {
+            var config = {
+                state:"start",
+                derivedKey:new Buffer("52bd8709d86a464b15c1d396ac349f22f64fa731", "hex").toString("binary"),
+                nonce:"servernonce",
+                salt:"salt",
+                iterations:1024
+            }
+            var mech = SCRAM.server;
+  
+            var promise = mech.stepStart(config, new Buffer("n,,n=bilbo.baggins,r=clientnonce", "binary"));
+            test.ok(promise);
+            test.equal(typeof(promise.then), "function");
+            promise.then(function(out) {
+                test.equal(out.state, "auth");
+                test.equal(out.data.toString("binary"),
+                           "r=clientnonceservernonce,s=c2FsdA==,i=1024");
+  
+                var input = "c=biws,r=clientnonceservernonce,p=+5Y3mMN7Nevileviln7tGZL49eA=";
+                promise = mech.stepAuth(config, new Buffer(input, "binary"));
+                test.ok(promise);
+                test.equal(typeof(promise.then), "function");
+  
                 return promise;
             }).then(tutils.unexpectedPass(test),
                     function(err) {
