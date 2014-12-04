@@ -1095,9 +1095,11 @@ module.exports = {
         "test success (derivedKey callback)" : function(test) {
             var config = {
                 state:"start",
-                derivedKey: function(cfg, user) {
+                derivedKey: function(cfg, user, salt, iterations) {
                     test.strictEqual(cfg, config);
                     test.equal(user, "bilbo.baggins");
+                    test.equal(salt, "salt");
+                    test.equal(iterations, 1024);
                     return new Buffer("52bd8709d86a464b15c1d396ac349f22f64fa731", "hex").toString("binary");
                 },
                 nonce:"servernonce",
@@ -1132,9 +1134,11 @@ module.exports = {
         "test success (derivedKey promise)" : function(test) {
             var config = {
                 state:"start",
-                derivedKey: function(cfg, user) {
+                derivedKey: function(cfg, user, salt, iterations) {
                     test.strictEqual(cfg, config);
                     test.equal(user, "bilbo.baggins");
+                    test.equal(salt, "salt");
+                    test.equal(iterations, 1024);
                     return q.resolve(new Buffer("52bd8709d86a464b15c1d396ac349f22f64fa731", "hex").toString("binary"));
                 },
                 nonce:"servernonce",
